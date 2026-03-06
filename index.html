@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dual-Matrix Neural Engine v4.0</title>
+    <title>Neural Engine v6.0: Manual Bypass Edition</title>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -12,464 +12,400 @@
     <style>
         :root {
             --bg-void: #010409;
-            --p1-color: #69BE28; /* Action Green */
-            --p1-trim: #002244;  /* Navy Blue */
-            --p2-color: #00aaff; 
-            --p2-trim: #3b0764;
-            --panel: rgba(13, 17, 23, 0.85);
-            --term-green: #0f0;
+            --action-green: #69BE28; 
+            --navy-blue: #002244;  
+            --alert-red: #ff3333;
+            --panel: rgba(13, 17, 23, 0.9);
         }
 
         body {
             margin: 0; overflow: hidden; background-color: var(--bg-void);
-            color: #fff; font-family: 'Courier New', monospace; user-select: none;
+            color: #c9d1d9; font-family: 'Courier New', monospace; user-select: none;
         }
 
         #webgl-canvas { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; }
 
-        /* --- ADVANCED TERMINAL BOOT SCREEN --- */
-        #boot-screen {
-            position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: #000; z-index: 999; display: flex; flex-direction: column;
-            padding: 40px; box-sizing: border-box; font-size: 14px;
-            color: var(--term-green); text-shadow: 0 0 5px var(--term-green);
+        /* --- UI OVERLAYS --- */
+        .hud-border {
+            position: absolute; border: 1px solid var(--action-green);
+            background: var(--panel); backdrop-filter: blur(10px);
+            z-index: 10; padding: 20px; box-shadow: 0 0 20px rgba(105, 190, 40, 0.2);
+            border-radius: 8px;
         }
-        .term-line { margin: 2px 0; opacity: 0; animation: fadeIn 0.1s forwards; }
-        .term-warning { color: #ff3333; text-shadow: 0 0 5px #ff3333; }
-        .term-highlight { color: #00aaff; text-shadow: 0 0 5px #00aaff; }
-        @keyframes fadeIn { to { opacity: 1; } }
-        
-        #progress-bar-container {
-            width: 100%; max-width: 600px; height: 20px; border: 2px solid var(--term-green);
-            margin-top: 20px; display: none; padding: 2px;
-        }
-        #progress-fill { height: 100%; background: var(--term-green); width: 0%; transition: width 0.2s; }
 
-        /* --- PIP CAMERA FEED --- */
+        #sys-header {
+            top: 20px; left: 20px; width: 350px;
+            border-left: 4px solid var(--action-green);
+        }
+        #sys-header h1 { margin: 0 0 10px 0; font-size: 1.2rem; letter-spacing: 2px; color: var(--action-green); }
+
+        .status-box {
+            background: #000; border: 1px solid #30363d; padding: 10px;
+            font-size: 0.85rem; margin-bottom: 10px; color: #8b949e;
+        }
+        .status-val { font-weight: bold; float: right; }
+
+        /* Hardware Feed */
         #video-feed {
-            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%) scaleX(-1);
-            width: 280px; border-radius: 4px; border: 1px solid #30363d;
-            z-index: 10; filter: contrast(130%) grayscale(80%);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+            position: absolute; bottom: 20px; left: 20px; width: 240px;
+            border: 2px solid var(--action-green); border-radius: 4px;
+            z-index: 10; filter: contrast(120%) saturate(50%);
+            transform: scaleX(-1); display: none;
         }
 
-        /* --- DUAL HUD PANELS --- */
-        .hud {
-            position: absolute; top: 30px; width: 320px;
-            background: var(--panel); backdrop-filter: blur(15px);
-            border-radius: 8px; padding: 25px; z-index: 10;
-            display: flex; flex-direction: column; gap: 10px;
-        }
-
-        #hud-p1 { left: 30px; border-left: 4px solid var(--p1-color); box-shadow: -10px 0 30px rgba(105, 190, 40, 0.1); }
-        #hud-p2 { right: 30px; border-right: 4px solid var(--p2-color); box-shadow: 10px 0 30px rgba(0, 170, 255, 0.1); }
-
-        h2 { margin: 0 0 15px 0; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 3px; }
-        #hud-p1 h2 { color: var(--p1-color); }
-        #hud-p2 h2 { color: var(--p2-color); }
-
-        .data-row { display: flex; justify-content: space-between; font-size: 0.85rem; border-bottom: 1px solid #21262d; padding-bottom: 5px; }
-        .label { color: #8b949e; }
-        .val { font-weight: bold; font-family: monospace; font-size: 0.95rem; }
-
-        /* --- GLOBAL CONTROLS --- */
-        .global-controls {
-            position: absolute; bottom: 30px; right: 30px; width: 300px;
-            background: var(--panel); padding: 25px; border-radius: 8px;
-            border: 1px solid #30363d; z-index: 10; box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-        }
+        /* Customization Controls */
+        #controls { top: 20px; right: 20px; width: 320px; border-right: 4px solid var(--action-green); }
         
-        .global-controls h3 { margin: 0 0 20px 0; color: #c9d1d9; font-size: 1rem; letter-spacing: 2px; text-transform: uppercase;}
-        .btn {
-            width: 100%; padding: 14px; margin-bottom: 15px;
-            background: #21262d; border: 1px solid #30363d;
-            color: #c9d1d9; font-family: inherit; font-weight: bold;
-            cursor: pointer; transition: 0.2s; border-radius: 4px;
-            text-transform: uppercase; letter-spacing: 2px;
+        .control-group { margin-bottom: 15px; }
+        .lbl { font-size: 0.75rem; color: var(--action-green); font-weight: bold; margin-bottom: 5px; display: block; }
+        
+        input[type="range"] {
+            width: 100%; accent-color: var(--action-green); margin-bottom: 5px;
         }
-        .btn.active { background: #1f6feb; border-color: #388bfd; color: #fff; box-shadow: 0 0 15px rgba(31, 111, 235, 0.4); }
-        .btn:hover { border-color: #8b949e; }
-
-        select { width: 100%; padding: 12px; background: #0d1117; color: #c9d1d9; border: 1px solid #30363d; border-radius: 4px; outline: none; cursor: pointer; font-family: inherit; }
-        label.select-label { font-size: 0.75rem; color: #8b949e; margin-bottom: 8px; display: block; font-weight: bold; text-transform: uppercase; }
-
-        .alert-box {
-            background: #490202; color: #ff7b72; padding: 10px; text-align: center;
-            border-radius: 4px; font-weight: bold; margin-top: 15px; display: none;
-            border: 1px solid #a93226; animation: flash 0.4s infinite; text-transform: uppercase; letter-spacing: 2px;
+        select {
+            width: 100%; padding: 10px; background: #000; color: #fff;
+            border: 1px solid #30363d; border-radius: 4px; font-family: inherit;
         }
-        @keyframes flash { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+
+        #loading {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-void); z-index: 999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .spinner { width: 60px; height: 60px; border: 3px solid var(--navy-blue); border-top-color: var(--action-green); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        #error-banner {
+            position: absolute; top: 0; left: 0; width: 100%; background: var(--alert-red);
+            color: #fff; text-align: center; padding: 10px; font-weight: bold;
+            z-index: 1000; display: none; text-transform: uppercase; letter-spacing: 2px;
+        }
     </style>
 </head>
 <body>
 
-    <div id="boot-screen">
-        <div id="terminal-output"></div>
-        <div id="progress-bar-container"><div id="progress-fill"></div></div>
+    <div id="error-banner">WEBCAM BLOCKED BY BROWSER SECURITY. INITIALIZING MANUAL SIMULATION OVERRIDE.</div>
+
+    <div id="loading">
+        <div class="spinner"></div>
+        <h2 style="color: var(--action-green); margin-top: 20px;">CONNECTING TO AI MATRIX</h2>
+        <p style="color: #8b949e;">Requesting Camera Access...</p>
     </div>
 
     <canvas id="webgl-canvas"></canvas>
     <video id="video-feed" autoplay playsinline></video>
 
-    <div class="hud" id="hud-p1">
-        <h2>AGENT 01</h2>
-        <div class="data-row"><span class="label">UPLINK:</span><span class="val" id="p1-status" style="color: #ff7b72;">DISCONNECTED</span></div>
-        <div class="data-row"><span class="label">NODE_SYNC:</span><span class="val" id="p1-nodes">0 / 478</span></div>
-        <div class="data-row"><span class="label">PITCH_AXIS:</span><span class="val" id="p1-pitch">0.00°</span></div>
-        <div class="data-row"><span class="label">YAW_AXIS:</span><span class="val" id="p1-yaw">0.00°</span></div>
-        <div class="data-row"><span class="label">APERTURE:</span><span class="val" id="p1-mouth">0.00 mm</span></div>
-        <div class="alert-box" id="p1-alert">TONGUE DEPLOYED</div>
+    <div class="hud-border" id="sys-header">
+        <h1>NEURAL ENGINE v6.0</h1>
+        <div class="status-box">
+            SYSTEM STATE: <span class="status-val" id="sys-status" style="color: #ff9900;">BOOTING</span>
+        </div>
+        <div class="status-box">
+            NODE COUNT: <span class="status-val" id="node-count">0 / 478</span>
+        </div>
+        <div class="status-box" style="font-size: 0.7rem; line-height: 1.4;">
+            If the AI tracking fails due to file:// security restrictions, the engine will automatically drop into SIMULATION MODE, unlocking manual sliders.
+        </div>
     </div>
 
-    <div class="hud" id="hud-p2">
-        <h2>AGENT 02</h2>
-        <div class="data-row"><span class="label">UPLINK:</span><span class="val" id="p2-status" style="color: #ff7b72;">DISCONNECTED</span></div>
-        <div class="data-row"><span class="label">NODE_SYNC:</span><span class="val" id="p2-nodes">0 / 478</span></div>
-        <div class="data-row"><span class="label">PITCH_AXIS:</span><span class="val" id="p2-pitch">0.00°</span></div>
-        <div class="data-row"><span class="label">YAW_AXIS:</span><span class="val" id="p2-yaw">0.00°</span></div>
-        <div class="data-row"><span class="label">APERTURE:</span><span class="val" id="p2-mouth">0.00 mm</span></div>
-        <div class="alert-box" id="p2-alert">TONGUE DEPLOYED</div>
-    </div>
-
-    <div class="global-controls">
-        <h3>Matrix Override</h3>
-        <button class="btn active" id="btn-mode">DUAL AGENT MODE</button>
-        <div>
-            <label class="select-label">ACTIVE 3D MESHES:</label>
+    <div class="hud-border" id="controls">
+        <h2 style="margin: 0 0 15px 0; color: #fff; font-size: 1rem; border-bottom: 1px solid #30363d; padding-bottom: 10px;">RIG CALIBRATION</h2>
+        
+        <div class="control-group">
+            <span class="lbl">EQUIP 3D ASSETS</span>
             <select id="asset-select">
                 <option value="patka">Cyber Joora / Patka</option>
-                <option value="none">Raw Geometry Net</option>
+                <option value="none">Raw Skeletal Geometry</option>
             </select>
+        </div>
+
+        <div id="sim-controls" style="opacity: 0.5; pointer-events: none; border-top: 1px dashed #30363d; padding-top: 15px; margin-top: 15px;">
+            <span class="lbl" style="color: #8b949e; text-align: center; margin-bottom: 15px;">MANUAL OVERRIDE LOCKED (AI ACTIVE)</span>
+            
+            <div class="control-group">
+                <span class="lbl">MANUAL PITCH (X-AXIS)</span>
+                <input type="range" id="sim-pitch" min="-1.5" max="1.5" step="0.1" value="0">
+            </div>
+            <div class="control-group">
+                <span class="lbl">MANUAL YAW (Y-AXIS)</span>
+                <input type="range" id="sim-yaw" min="-1.5" max="1.5" step="0.1" value="0">
+            </div>
+            <div class="control-group">
+                <span class="lbl">TONGUE DEPLOYMENT</span>
+                <input type="range" id="sim-tongue" min="0" max="2" step="0.1" value="0">
+            </div>
         </div>
     </div>
 
     <script>
         // ==========================================
-        // 0. FAKE TERMINAL BOOT SEQUENCE (To mask ML loading times)
+        // 1. CUSTOM GLSL SHADERS (High-End Graphics)
         // ==========================================
-        const termOutput = document.getElementById('terminal-output');
-        const progressBar = document.getElementById('progress-bar-container');
-        const progressFill = document.getElementById('progress-fill');
-        
-        const bootLines = [
-            "Initiating BIOS check...",
-            "Loading WebGL Renderer via Three.js r128...",
-            "<span class='term-highlight'>SUCCESS: Hardware Acceleration Detected (MSI GPU).</span>",
-            "Establishing secure HTTPS camera handshake...",
-            "Awaiting user permission...",
-            "Camera stream acquired. Resolving dimensions...",
-            "Contacting Google ML Servers for Neural Weights...",
-            "<span class='term-warning'>WARNING: Model size is large (15MB+). Connection speed dictates load time.</span>",
-            "Downloading 478-node FaceMesh topology..."
-        ];
-
-        let lineIdx = 0;
-        function typeTerminal() {
-            if (lineIdx < bootLines.length) {
-                const p = document.createElement('div');
-                p.className = 'term-line';
-                p.innerHTML = bootLines[lineIdx];
-                termOutput.appendChild(p);
-                lineIdx++;
-                setTimeout(typeTerminal, 400 + Math.random() * 800);
-            } else {
-                progressBar.style.display = 'block';
-                // Fake progress that hangs at 90% until the actual AI loads
-                let prog = 0;
-                const int = setInterval(() => {
-                    prog += Math.random() * 5;
-                    if (prog > 90) clearInterval(int);
-                    progressFill.style.width = Math.min(prog, 90) + '%';
-                }, 200);
+        const holoVert = `
+            varying vec3 vNormal;
+            varying vec3 vViewPosition;
+            void main() {
+                vNormal = normalize(normalMatrix * normal);
+                vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                vViewPosition = -mvPosition.xyz;
+                gl_Position = projectionMatrix * mvPosition;
             }
-        }
-        typeTerminal();
+        `;
+        
+        const holoFrag = `
+            uniform vec3 color;
+            uniform float time;
+            varying vec3 vNormal;
+            varying vec3 vViewPosition;
+            void main() {
+                vec3 normal = normalize(vNormal);
+                vec3 viewDir = normalize(vViewPosition);
+                
+                // Fresnel Glow effect
+                float fresnel = dot(normal, viewDir);
+                fresnel = clamp(1.0 - fresnel, 0.0, 1.0);
+                fresnel = pow(fresnel, 3.0);
+                
+                // Animated digital scanlines
+                float scanline = sin(gl_FragCoord.y * 0.2 + time * 5.0) * 0.1;
+                
+                gl_FragColor = vec4(color * (fresnel + 0.3) + scanline, 0.85);
+            }
+        `;
+
+        const uniforms = {
+            color: { value: new THREE.Color(0x69BE28) }, // Action Green
+            time: { value: 0.0 }
+        };
+
+        const customHoloMaterial = new THREE.ShaderMaterial({
+            uniforms: uniforms, vertexShader: holoVert, fragmentShader: holoFrag,
+            transparent: true, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false
+        });
 
         // ==========================================
-        // 1. ADVANCED THREE.JS CYBER-STADIUM
+        // 2. THREE.JS SCENE SETUP
         // ==========================================
         const canvas = document.getElementById('webgl-canvas');
         const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
 
         const scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x010409, 0.0006);
+        scene.fog = new THREE.FogExp2(0x010409, 0.0008);
 
-        const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 6000);
-        camera.position.set(0, 100, 1200);
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 5000);
+        camera.position.set(0, 50, 800);
 
-        // --- Lighting ---
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
-        scene.add(ambientLight);
+        // Cyber Grid Floor
+        const gridFloor = new THREE.GridHelper(3000, 80, 0x002244, 0x010409); // Navy Grid
+        gridFloor.position.y = -400;
+        scene.add(gridFloor);
+
+        // ==========================================
+        // 3. THE 3D CYBER-AGENT RIG
+        // ==========================================
+        const agentGroup = new THREE.Group();
+        scene.add(agentGroup);
+
+        // 478-Node Array
+        const nodeGeo = new THREE.BufferGeometry();
+        const nodePositions = new Float32Array(478 * 3);
+        nodeGeo.setAttribute('position', new THREE.BufferAttribute(nodePositions, 3));
+        const nodeMat = new THREE.PointsMaterial({ color: 0x69BE28, size: 4, transparent: true, opacity: 0.9 });
+        const nodes = new THREE.Points(nodeGeo, nodeMat);
+        agentGroup.add(nodes);
+
+        // Skeletal Structure (Using Custom Shader)
+        const skeleton = new THREE.Group();
+        agentGroup.add(skeleton);
+
+        const neckGeo = new THREE.CylinderGeometry(40, 50, 120, 16);
+        const neck = new THREE.Mesh(neckGeo, customHoloMaterial);
+        skeleton.add(neck);
+
+        const torsoGeo = new THREE.BoxGeometry(300, 200, 80);
+        const torso = new THREE.Mesh(torsoGeo, customHoloMaterial);
+        skeleton.add(torso);
+
+        // Tongue Mesh
+        const tongueGeo = new THREE.CapsuleGeometry(15, 40, 4, 16);
+        const tongueMat = new THREE.MeshBasicMaterial({ color: 0xff3333, wireframe: true });
+        const tongue = new THREE.Mesh(tongueGeo, tongueMat);
+        tongue.rotation.x = Math.PI / 2;
+        tongue.scale.set(0.01, 0.01, 0.01);
+        agentGroup.add(tongue);
+
+        // Cyber Patka Rig
+        const hatAnchor = new THREE.Group();
+        agentGroup.add(hatAnchor);
+
+        const domeGeo = new THREE.SphereGeometry(95, 32, 16, 0, Math.PI * 2, 0, Math.PI * 0.55);
+        const dome = new THREE.Mesh(domeGeo, customHoloMaterial);
+        dome.rotation.x = -0.2;
         
-        const spot1 = new THREE.SpotLight(0x69BE28, 5, 3000, Math.PI/4, 0.5, 1);
-        spot1.position.set(-800, 800, 500);
-        scene.add(spot1);
+        const knotGeo = new THREE.TorusGeometry(28, 16, 16, 32);
+        const knot = new THREE.Mesh(knotGeo, customHoloMaterial);
+        knot.position.set(0, 85, -20); knot.rotation.x = Math.PI / 2;
         
-        const spot2 = new THREE.SpotLight(0x00aaff, 5, 3000, Math.PI/4, 0.5, 1);
-        spot2.position.set(800, 800, 500);
-        scene.add(spot2);
-
-        // --- Cyber Stadium Environment ---
-        const gridHelper = new THREE.GridHelper(5000, 100, 0x1f6feb, 0x0d1117);
-        gridHelper.position.y = -600;
-        scene.add(gridHelper);
-
-        // Floating Monoliths in background
-        const monolithGeo = new THREE.BoxGeometry(100, 800, 100);
-        const monolithMat = new THREE.MeshStandardMaterial({ color: 0x010409, roughness: 0.1, metalness: 0.9 });
-        for(let i=0; i<10; i++) {
-            const m = new THREE.Mesh(monolithGeo, monolithMat);
-            m.position.set((Math.random() - 0.5) * 4000, -200, -1000 - Math.random() * 2000);
-            scene.add(m);
-        }
-
-        // Particle Dust
-        const dustGeo = new THREE.BufferGeometry();
-        const dustPos = new Float32Array(2000 * 3);
-        for(let i=0; i<2000*3; i++) dustPos[i] = (Math.random() - 0.5) * 4000;
-        dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
-        const dustMat = new THREE.PointsMaterial({ color: 0x8b949e, size: 4, transparent: true, opacity: 0.4 });
-        const dustSystem = new THREE.Points(dustGeo, dustMat);
-        scene.add(dustSystem);
+        hatAnchor.add(dome); hatAnchor.add(knot);
 
         // ==========================================
-        // 2. PROCEDURAL AVATAR CLASS (Faces, Torso, Tongue)
+        // 4. FAILSAFE / MANUAL SIMULATION ENGINE
         // ==========================================
-        class HolographicAgent {
-            constructor(primaryColorHex, trimColorHex) {
-                this.primaryColor = primaryColorHex;
-                this.trimColor = trimColorHex;
-                
-                this.group = new THREE.Group();
-                scene.add(this.group);
+        let simulationMode = false;
+        let simNodes = [];
 
-                // --- 478 Node Face Mesh ---
-                this.geometry = new THREE.BufferGeometry();
-                this.positions = new Float32Array(478 * 3);
-                this.geometry.setAttribute('position', new THREE.BufferAttribute(this.positions, 3));
-                
-                this.material = new THREE.PointsMaterial({
-                    color: this.primaryColor, size: 5, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending
-                });
-                this.points = new THREE.Points(this.geometry, this.material);
-                this.group.add(this.points);
-
-                // --- Procedural Cyber-Neck ---
-                const neckGeo = new THREE.CylinderGeometry(50, 70, 160, 32);
-                const neckMat = new THREE.MeshStandardMaterial({ color: this.primaryColor, wireframe: true, transparent: true, opacity: 0.5 });
-                this.neck = new THREE.Mesh(neckGeo, neckMat);
-                this.group.add(this.neck);
-
-                // --- Procedural Shoulders & Torso ---
-                const torsoGeo = new THREE.BoxGeometry(380, 260, 120);
-                const torsoMat = new THREE.MeshStandardMaterial({ color: 0x0d1117, roughness: 0.8, metalness: 0.4 });
-                this.torso = new THREE.Mesh(torsoGeo, torsoMat);
-                
-                // Torso Trim
-                const trimGeo = new THREE.EdgesGeometry(torsoGeo);
-                const trimMat = new THREE.LineBasicMaterial({ color: this.primaryColor, linewidth: 2 });
-                this.torsoTrim = new THREE.LineSegments(trimGeo, trimMat);
-                this.torso.add(this.torsoTrim);
-                this.group.add(this.torso);
-
-                // --- Dynamic Tongue Mesh ---
-                const tongueGeo = new THREE.CapsuleGeometry(18, 40, 4, 32);
-                const tongueMat = new THREE.MeshStandardMaterial({ color: 0xff3366, roughness: 0.3 });
-                this.tongue = new THREE.Mesh(tongueGeo, tongueMat);
-                this.tongue.rotation.x = Math.PI / 2; 
-                this.tongue.scale.set(0.01, 0.01, 0.01); 
-                this.group.add(this.tongue);
-
-                // --- 3D Headwear Anchor (Patka) ---
-                this.hatAnchor = new THREE.Group();
-                this.group.add(this.hatAnchor);
-
-                const patkaMat = new THREE.MeshStandardMaterial({ color: this.trimColor, roughness: 0.9 });
-                const domeGeo = new THREE.SphereGeometry(105, 32, 16, 0, Math.PI * 2, 0, Math.PI * 0.55);
-                const dome = new THREE.Mesh(domeGeo, patkaMat);
-                dome.rotation.x = -0.2;
-                
-                const knotGeo = new THREE.TorusGeometry(32, 18, 16, 32);
-                const knot = new THREE.Mesh(knotGeo, patkaMat);
-                knot.position.set(0, 95, -20); knot.rotation.x = Math.PI / 2;
-                
-                this.hatAnchor.add(dome); this.hatAnchor.add(knot);
-
-                this.smoothedPos = new Float32Array(478 * 3);
-                this.smoothedMouthDist = 0;
-            }
-
-            update(landmarks) {
-                const rawPos = this.points.geometry.attributes.position.array;
-                let cx = 0, cy = 0, cz = 0; 
-                let chinX = 0, chinY = 0, chinZ = 0; 
-                let mouthX = 0, mouthY = 0, mouthZ = 0; 
-
-                // Process 478 Nodes
-                for (let i = 0; i < landmarks.length; i++) {
-                    const tx = (landmarks[i].x - 0.5) * -1400; 
-                    const ty = (landmarks[i].y - 0.5) * -1400;
-                    const tz = landmarks[i].z * 1400;
-
-                    this.smoothedPos[i*3] += (tx - this.smoothedPos[i*3]) * 0.6;
-                    this.smoothedPos[i*3+1] += (ty - this.smoothedPos[i*3+1]) * 0.6;
-                    this.smoothedPos[i*3+2] += (tz - this.smoothedPos[i*3+2]) * 0.6;
-
-                    rawPos[i*3] = this.smoothedPos[i*3];
-                    rawPos[i*3+1] = this.smoothedPos[i*3+1];
-                    rawPos[i*3+2] = this.smoothedPos[i*3+2];
-
-                    if (i === 1) { cx = rawPos[i*3]; cy = rawPos[i*3+1]; cz = rawPos[i*3+2]; } // Nose
-                    if (i === 152) { chinX = rawPos[i*3]; chinY = rawPos[i*3+1]; chinZ = rawPos[i*3+2]; } // Chin
-                    if (i === 13) { mouthX = rawPos[i*3]; mouthY = rawPos[i*3+1]; mouthZ = rawPos[i*3+2]; } // Lip
-                }
-                this.points.geometry.attributes.position.needsUpdate = true;
-
-                // Telemetry Math
-                const lEye = landmarks[133]; const rEye = landmarks[362]; const chin = landmarks[152];
-                const pitch = Math.atan2(chin.z - lEye.z, chin.y - lEye.y);
-                const yaw = Math.atan2(rEye.z - lEye.z, rEye.x - lEye.x);
-                const roll = Math.atan2(rEye.y - lEye.y, rEye.x - lEye.x);
-
-                // Mouth Aperture Math (Tongue trigger)
-                const upperLip = landmarks[13]; const lowerLip = landmarks[14];
-                const targetMouthDist = Math.abs(upperLip.y - lowerLip.y);
-                this.smoothedMouthDist += (targetMouthDist - this.smoothedMouthDist) * 0.4;
-                
-                const tongueThreshold = 0.055; 
-                if (this.smoothedMouthDist > tongueThreshold) {
-                    const extension = Math.min((this.smoothedMouthDist - tongueThreshold) * 18, 1.8);
-                    this.tongue.scale.set(extension, extension, extension);
-                    this.tongue.position.set(mouthX, mouthY - 15, mouthZ + (extension * 20));
-                    this.tongue.rotation.set(pitch + (Math.PI/2), yaw, roll);
-                } else {
-                    this.tongue.scale.set(0.01, 0.01, 0.01);
-                }
-
-                // Anatomy Anchors
-                this.neck.position.set(chinX, chinY - 70, chinZ - 40);
-                this.neck.rotation.set(pitch, yaw, roll);
-
-                this.torso.position.set(chinX, chinY - 240, chinZ - 60);
-                this.torso.rotation.set(0, yaw * 0.4, roll * 0.2);
-
-                const fhX = rawPos[10*3]; const fhY = rawPos[10*3+1]; const fhZ = rawPos[10*3+2];
-                this.hatAnchor.position.set(fhX, fhY + 20, fhZ - 20);
-                this.hatAnchor.rotation.set(pitch + 0.1, yaw, roll);
-
-                return { pitch, yaw, roll, mouthDist: this.smoothedMouthDist };
-            }
-
-            hide() {
-                this.points.geometry.attributes.position.array.fill(0);
-                this.points.geometry.attributes.position.needsUpdate = true;
-                this.neck.position.set(0, 9999, 0);
-                this.torso.position.set(0, 9999, 0);
-                this.hatAnchor.position.set(0, 9999, 0);
-                this.tongue.scale.set(0.01, 0.01, 0.01);
-            }
-        }
-
-        const agent1 = new HolographicAgent(0x69BE28, 0x002244);
-        const agent2 = new HolographicAgent(0x00aaff, 0x3b0764);
-
-        // ==========================================
-        // 3. MULTI-FACE AI TRACKING ENGINE
-        // ==========================================
-        const videoElement = document.getElementById('video-feed');
-        let maxPlayers = 2;
-
-        const faceMesh = new FaceMesh({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});
-        
-        function updateMeshConfig() {
-            faceMesh.setOptions({ 
-                maxNumFaces: maxPlayers, 
-                refineLandmarks: true, 
-                minDetectionConfidence: 0.6, 
-                minTrackingConfidence: 0.6 
+        // Pre-calculate a mathematical sphere to represent a face if AI fails
+        for(let i=0; i<478; i++) {
+            const phi = Math.acos( -1 + ( 2 * i ) / 478 );
+            const theta = Math.sqrt( 478 * Math.PI ) * phi;
+            simNodes.push({
+                x: (Math.cos(theta) * Math.sin(phi) * 0.4) + 0.5,
+                y: (Math.cos(phi) * 0.5) + 0.5,
+                z: (Math.sin(theta) * Math.sin(phi) * 0.4)
             });
         }
-        updateMeshConfig();
+
+        function enableSimulationMode() {
+            simulationMode = true;
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error-banner').style.display = 'block';
+            document.getElementById('sys-status').innerText = "SIMULATION ACTIVE";
+            document.getElementById('sys-status').style.color = var(--action-green);
+            document.getElementById('node-count').innerText = "SYNTHETIC MESH";
+            
+            // Unlock UI Sliders
+            const simControls = document.getElementById('sim-controls');
+            simControls.style.opacity = '1';
+            simControls.style.pointerEvents = 'auto';
+            simControls.querySelector('.lbl').innerText = "MANUAL OVERRIDE UNLOCKED";
+            simControls.querySelector('.lbl').style.color = "#69BE28";
+        }
+
+        // ==========================================
+        // 5. THE HYBRID UPDATE LOOP
+        // ==========================================
+        let smoothedPos = new Float32Array(478 * 3);
+
+        function updateRig(landmarks, manualPitch = 0, manualYaw = 0, manualTongue = 0) {
+            const rawPos = nodes.geometry.attributes.position.array;
+            let cx = 0, cy = 0, cz = 0;
+
+            // Update Nodes
+            for (let i = 0; i < 478; i++) {
+                const targetX = (landmarks[i].x - 0.5) * -1000;
+                const targetY = (landmarks[i].y - 0.5) * -1000;
+                const targetZ = landmarks[i].z * 1000;
+
+                smoothedPos[i*3] += (targetX - smoothedPos[i*3]) * 0.5;
+                smoothedPos[i*3+1] += (targetY - smoothedPos[i*3+1]) * 0.5;
+                smoothedPos[i*3+2] += (targetZ - smoothedPos[i*3+2]) * 0.5;
+
+                rawPos[i*3] = smoothedPos[i*3];
+                rawPos[i*3+1] = smoothedPos[i*3+1];
+                rawPos[i*3+2] = smoothedPos[i*3+2];
+
+                if (i === 152) { cx = rawPos[i*3]; cy = rawPos[i*3+1]; cz = rawPos[i*3+2]; } // Chin
+            }
+            nodes.geometry.attributes.position.needsUpdate = true;
+
+            // Calculate Angles (AI or Manual)
+            let pitch = manualPitch; let yaw = manualYaw; let roll = 0;
+            
+            if (!simulationMode) {
+                const lEye = landmarks[133]; const rEye = landmarks[362]; const chin = landmarks[152];
+                pitch = Math.atan2(chin.z - lEye.z, chin.y - lEye.y);
+                yaw = Math.atan2(rEye.z - lEye.z, rEye.x - lEye.x);
+                roll = Math.atan2(rEye.y - lEye.y, rEye.x - lEye.x);
+            }
+
+            // Apply to Anatomy
+            neck.position.set(cx, cy - 50, cz - 30);
+            neck.rotation.set(pitch, yaw, roll);
+
+            torso.position.set(cx, cy - 200, cz - 50);
+            torso.rotation.set(0, yaw * 0.5, roll * 0.2);
+
+            hatAnchor.position.set(rawPos[10*3], rawPos[10*3+1] + 20, rawPos[10*3+2] - 20);
+            hatAnchor.rotation.set(pitch + 0.1, yaw, roll);
+
+            // Tongue Logic
+            let tongueScale = manualTongue;
+            if (!simulationMode) {
+                const mouthDist = Math.abs(landmarks[13].y - landmarks[14].y);
+                if (mouthDist > 0.05) tongueScale = Math.min((mouthDist - 0.05) * 15, 1.5);
+            }
+            
+            if (tongueScale > 0.01) {
+                tongue.scale.set(tongueScale, tongueScale, tongueScale);
+                tongue.position.set(rawPos[13*3], rawPos[13*3+1] - 10, rawPos[13*3+2] + (tongueScale * 15));
+                tongue.rotation.set(pitch + (Math.PI/2), yaw, roll);
+            } else {
+                tongue.scale.set(0.01, 0.01, 0.01);
+            }
+        }
+
+        // ==========================================
+        // 6. HARDWARE INITIALIZATION & ERROR CATCHING
+        // ==========================================
+        const videoElement = document.getElementById('video-feed');
+        
+        const faceMesh = new FaceMesh({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});
+        faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.6, minTrackingConfidence: 0.6 });
 
         faceMesh.onResults((results) => {
-            // ML is loaded! Hide the boot screen.
-            const bootScreen = document.getElementById('boot-screen');
-            if(bootScreen.style.display !== 'none') {
-                progressFill.style.width = '100%';
-                setTimeout(() => { bootScreen.style.display = 'none'; }, 500);
-            }
-
-            agent1.hide(); agent2.hide();
-            document.getElementById('p1-status').innerText = "DISCONNECTED"; document.getElementById('p1-status').style.color = "#ff7b72";
-            document.getElementById('p2-status').innerText = "DISCONNECTED"; document.getElementById('p2-status').style.color = "#ff7b72";
-            document.getElementById('p1-nodes').innerText = "0 / 478"; document.getElementById('p2-nodes').innerText = "0 / 478";
-            document.getElementById('p1-alert').style.display = 'none'; document.getElementById('p2-alert').style.display = 'none';
+            if(simulationMode) return; // Ignore if in sim mode
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('video-feed').style.display = 'block';
+            document.getElementById('sys-status').innerText = "AI LOCKED";
+            document.getElementById('sys-status').style.color = "#69BE28";
+            document.getElementById('node-count').innerText = "478 / 478";
 
             if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
-                
-                const faces = results.multiFaceLandmarks.sort((a, b) => b[1].x - a[1].x);
-
-                const data1 = agent1.update(faces[0]);
-                document.getElementById('p1-status').innerText = "LOCKED & SYNCED"; document.getElementById('p1-status').style.color = "var(--p1-color)";
-                document.getElementById('p1-nodes').innerText = "478 / 478";
-                document.getElementById('p1-pitch').innerText = (data1.pitch * (180/Math.PI)).toFixed(2) + "°";
-                document.getElementById('p1-yaw').innerText = (data1.yaw * (180/Math.PI)).toFixed(2) + "°";
-                document.getElementById('p1-mouth').innerText = (data1.mouthDist * 100).toFixed(2) + " mm";
-                if (data1.mouthDist > 0.055) document.getElementById('p1-alert').style.display = 'block';
-
-                if (faces.length > 1 && maxPlayers === 2) {
-                    const data2 = agent2.update(faces[1]);
-                    document.getElementById('p2-status').innerText = "LOCKED & SYNCED"; document.getElementById('p2-status').style.color = "var(--p2-color)";
-                    document.getElementById('p2-nodes').innerText = "478 / 478";
-                    document.getElementById('p2-pitch').innerText = (data2.pitch * (180/Math.PI)).toFixed(2) + "°";
-                    document.getElementById('p2-yaw').innerText = (data2.yaw * (180/Math.PI)).toFixed(2) + "°";
-                    document.getElementById('p2-mouth').innerText = (data2.mouthDist * 100).toFixed(2) + " mm";
-                    if (data2.mouthDist > 0.055) document.getElementById('p2-alert').style.display = 'block';
-                }
+                updateRig(results.multiFaceLandmarks[0]);
             }
         });
 
-        const cam = new Camera(videoElement, {
-            onFrame: async () => { await faceMesh.send({image: videoElement}); },
-            width: 1280, height: 720
-        });
-        cam.start();
+        // The Failsafe Camera Boot Sequence
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then((stream) => {
+                videoElement.srcObject = stream;
+                const cam = new Camera(videoElement, {
+                    onFrame: async () => { await faceMesh.send({image: videoElement}); },
+                    width: 640, height: 480
+                });
+                cam.start();
+            })
+            .catch((err) => {
+                console.error("CAMERA BLOCKED BY BROWSER:", err);
+                // Trigger Hardware Bypass
+                enableSimulationMode();
+            });
 
         // ==========================================
-        // 4. GLOBAL UI CONTROLS
+        // 7. UI EVENTS & RENDER LOOP
         // ==========================================
-        const modeBtn = document.getElementById('btn-mode');
-        modeBtn.addEventListener('click', () => {
-            if (maxPlayers === 2) {
-                maxPlayers = 1; modeBtn.innerText = "SINGLE AGENT MODE";
-                modeBtn.classList.remove('active'); document.getElementById('hud-p2').style.opacity = '0.3';
-            } else {
-                maxPlayers = 2; modeBtn.innerText = "DUAL AGENT MODE";
-                modeBtn.classList.add('active'); document.getElementById('hud-p2').style.opacity = '1';
-            }
-            updateMeshConfig();
-        });
-
         document.getElementById('asset-select').addEventListener('change', (e) => {
-            const isPatka = e.target.value === 'patka';
-            agent1.hatAnchor.visible = isPatka;
-            agent2.hatAnchor.visible = isPatka;
+            hatAnchor.visible = (e.target.value === 'patka');
         });
 
-        // ==========================================
-        // 5. RENDER LOOP
-        // ==========================================
+        const sPitch = document.getElementById('sim-pitch');
+        const sYaw = document.getElementById('sim-yaw');
+        const sTongue = document.getElementById('sim-tongue');
+
         function animate() {
             requestAnimationFrame(animate);
-            // Ambient environment animations
-            dustSystem.rotation.y += 0.001;
-            gridHelper.position.z = (Date.now() * 0.1) % 100;
             
-            // Slight camera drift for cinematic feel
-            camera.position.x = Math.sin(Date.now() * 0.0005) * 50;
-            camera.lookAt(0, 0, 0);
+            // Update custom shader time
+            uniforms.time.value += 0.01;
+
+            if (simulationMode) {
+                // Feed the math sphere into the rig and animate it breathing
+                for(let i=0; i<478; i++) {
+                    simNodes[i].z += Math.sin(Date.now() * 0.002 + simNodes[i].y * 10) * 0.0005;
+                }
+                updateRig(simNodes, parseFloat(sPitch.value), parseFloat(sYaw.value), parseFloat(sTongue.value));
+            }
 
             renderer.render(scene, camera);
         }
