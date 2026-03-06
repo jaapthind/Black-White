@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neural Mesh to Avatar Engine</title>
+    <title>AAA WebGL Avatar Engine</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -11,246 +11,279 @@
 
     <style>
         :root {
-            --bg-dark: #09090b;
-            --panel-bg: #18181b;
-            --accent: #10b981;
-            --accent-glow: rgba(16, 185, 129, 0.4);
-            --text-main: #f4f4f5;
-            --border: #27272a;
+            --bg: #050505;
+            --accent: #00ffcc;
+            --panel: rgba(15, 15, 20, 0.85);
+        }
+        body { margin: 0; overflow: hidden; background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; }
+        
+        #webgl-container { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; }
+        #video-feed { display: none; } /* Hidden, read purely by AI */
+
+        /* Advanced UI Overlay */
+        #ui-panel {
+            position: absolute; top: 20px; right: 20px; width: 350px;
+            background: var(--panel); backdrop-filter: blur(15px);
+            border: 1px solid #333; border-radius: 15px; padding: 25px;
+            z-index: 10; box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+            display: flex; flex-direction: column; gap: 15px;
         }
 
-        body {
-            margin: 0; padding: 0;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            overflow: hidden;
-            display: flex;
-            height: 100vh;
-            width: 100vw;
+        h1 { margin: 0; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .status { font-family: monospace; color: var(--accent); font-size: 0.9rem; }
+        
+        label { font-size: 0.8rem; font-weight: bold; text-transform: uppercase; color: #888; }
+        select, input[type="color"] {
+            width: 100%; padding: 12px; background: #000; color: #fff;
+            border: 1px solid #444; border-radius: 8px; font-size: 1rem; cursor: pointer;
         }
 
-        /* --- PHASE 1: 3D TRACKER UI --- */
-        #tracker-screen {
-            position: absolute; top: 0; left: 0;
-            width: 100%; height: 100%;
-            display: flex; flex-direction: column;
+        .btn {
+            background: linear-gradient(90deg, #00ffcc, #0088ff);
+            color: #000; font-weight: 900; text-transform: uppercase;
+            border: none; padding: 15px; border-radius: 8px; cursor: pointer;
+            transition: 0.2s; margin-top: 10px;
+        }
+        .btn:hover { transform: scale(1.02); box-shadow: 0 0 20px rgba(0, 255, 204, 0.4); }
+
+        #loading {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 100; display: flex; flex-direction: column;
             align-items: center; justify-content: center;
-            z-index: 50; background: var(--bg-dark);
-            transition: opacity 0.5s;
         }
-
-        #video-feed { display: none; } /* Hidden, read by AI */
-        
-        #mesh-canvas {
-            position: absolute; top: 0; left: 0;
-            width: 100%; height: 100%; z-index: 1;
-        }
-
-        .tracker-hud {
-            position: absolute; bottom: 40px;
-            z-index: 10; display: flex; flex-direction: column; align-items: center;
-            background: rgba(9, 9, 11, 0.8); padding: 20px;
-            border-radius: 12px; border: 1px solid var(--accent);
-            box-shadow: 0 0 30px var(--accent-glow);
-            backdrop-filter: blur(10px);
-        }
-
-        .tracker-hud h2 { margin: 0 0 10px 0; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px; }
-        .node-count { font-family: monospace; color: var(--accent); font-size: 1.1rem; margin-bottom: 15px;}
-        
-        #capture-btn {
-            background: var(--accent); color: #000;
-            border: none; padding: 15px 40px; font-size: 1.2rem; font-weight: 900;
-            border-radius: 8px; cursor: pointer; text-transform: uppercase;
-            transition: all 0.2s;
-        }
-        #capture-btn:hover { transform: scale(1.05); box-shadow: 0 0 15px var(--accent); }
-        #capture-btn:disabled { background: #333; color: #666; cursor: not-allowed; box-shadow: none; }
-
-        /* --- PHASE 2: AVATAR EDITOR UI --- */
-        #editor-screen {
-            display: none; width: 100%; height: 100%;
-            z-index: 100; background: var(--bg-dark);
-        }
-
-        .sidebar {
-            width: 380px; background: var(--panel-bg);
-            border-right: 1px solid var(--border);
-            display: flex; flex-direction: column;
-            height: 100%; overflow-y: auto;
-        }
-
-        .header { padding: 25px 20px; border-bottom: 1px solid var(--border); }
-        .header h1 { margin: 0; font-size: 1.4rem; color: var(--accent); }
-        .header p { margin: 5px 0 0 0; font-size: 0.8rem; color: #888; }
-
-        .control-group { padding: 15px 20px; border-bottom: 1px solid var(--border); }
-        .control-group label { display: block; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; color: #a1a1aa; margin-bottom: 8px; letter-spacing: 1px;}
-        
-        select, input[type="color"], input[type="range"] {
-            width: 100%; padding: 10px;
-            background: #000; color: #fff; border: 1px solid #333;
-            border-radius: 6px; font-size: 0.9rem; outline: none; cursor: pointer;
-        }
-
-        .stage {
-            flex: 1; display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            background: radial-gradient(circle at center, #27272a 0%, var(--bg-dark) 100%);
-            position: relative;
-        }
-
-        #avatarCanvas {
-            width: 600px; height: 600px;
-            background: transparent;
-            filter: drop-shadow(0 20px 30px rgba(0,0,0,0.5));
-        }
-
-        .export-btn {
-            position: absolute; bottom: 30px; right: 30px;
-            background: #fff; color: #000; font-weight: bold;
-            border: none; padding: 15px 30px; border-radius: 30px;
-            cursor: pointer; transition: transform 0.2s;
-        }
-        .export-btn:hover { transform: scale(1.05); }
-
-        /* Animation */
-        @keyframes scanline {
-            0% { top: 0; opacity: 0; }
-            50% { opacity: 1; }
-            100% { top: 100%; opacity: 0; }
-        }
-        .scanner {
-            position: absolute; left: 0; width: 100%; height: 2px;
-            background: var(--accent); box-shadow: 0 0 10px var(--accent);
-            animation: scanline 2s linear infinite; z-index: 5; pointer-events: none;
-        }
+        .spinner { width: 50px; height: 50px; border: 3px solid #333; border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-    <div id="tracker-screen">
-        <video id="video-feed" autoplay playsinline></video>
-        <canvas id="mesh-canvas"></canvas>
-        <div class="scanner"></div>
-        
-        <div class="tracker-hud">
-            <h2>Neural Face Mapping</h2>
-            <div class="node-count" id="node-status">Initializing WebGL & ML Models...</div>
-            <button id="capture-btn" disabled>Lock DNA & Generate</button>
-        </div>
+    <div id="loading">
+        <div class="spinner"></div>
+        <h2 style="margin-top: 20px; color: #888;">Initializing Neural Models & WebGL...</h2>
+        <p>Ensure you are on a secure HTTPS server (GitHub Pages)</p>
     </div>
 
-    <div id="editor-screen">
-        <div class="sidebar">
-            <div class="header">
-                <h1>Avatar Studio</h1>
-                <p>Geometry auto-calibrated from 468 point mesh.</p>
-            </div>
+    <video id="video-feed" autoplay playsinline></video>
+    <div id="webgl-container"></div>
 
-            <div class="control-group">
-                <label>Calibrated Skin Tone</label>
-                <input type="color" id="skinTone" value="#d29972">
-            </div>
-            <div class="control-group">
-                <label>Jaw Width (AI Generated)</label>
-                <input type="range" id="faceWidth" min="90" max="160" value="125">
-            </div>
-            <div class="control-group">
-                <label>Eye Spacing (AI Generated)</label>
-                <input type="range" id="eyeSpacing" min="30" max="70" value="45">
-            </div>
+    <div id="ui-panel">
+        <h1>3D Holographic Studio</h1>
+        <div class="status" id="ai-status">AI: Awaiting Camera Permission...</div>
 
-            <div class="control-group">
-                <label>Headwear</label>
-                <select id="headwear">
-                    <option value="patka">Patka / Joora Knot</option>
-                    <option value="cap">Snapback Cap</option>
-                    <option value="none">None (Show Hair)</option>
-                </select>
-            </div>
-            <div class="control-group">
-                <label>Hair Style (If no headwear)</label>
-                <select id="hairStyle">
-                    <option value="fade">Clean Fade</option>
-                    <option value="spiky">Textured Crop</option>
-                </select>
-            </div>
-            <div class="control-group">
-                <label>Hair / Headwear Color</label>
-                <input type="color" id="hairColor" value="#111111">
-            </div>
-
-            <div class="control-group">
-                <label>Outfit Style</label>
-                <select id="outfit">
-                    <option value="jersey">Pro Sports Jersey</option>
-                    <option value="hoodie">Tech Hoodie</option>
-                </select>
-            </div>
-            <div class="control-group">
-                <label>Outfit Primary Color</label>
-                <input type="color" id="outfitColor1" value="#002244"> </div>
-            <div class="control-group">
-                <label>Outfit Trim Color</label>
-                <input type="color" id="outfitColor2" value="#69BE28"> </div>
+        <div>
+            <label>Skin / Mesh Material</label>
+            <input type="color" id="meshColor" value="#ffcda0">
         </div>
 
-        <div class="stage">
-            <canvas id="avatarCanvas" width="800" height="800"></canvas>
-            <button class="export-btn" id="export-btn">Download Avatar PNG</button>
+        <div>
+            <label>3D Headwear</label>
+            <select id="headwear">
+                <option value="none">None</option>
+                <option value="patka">Turban / Joora Knot (3D)</option>
+                <option value="cap">Snapback Cap (3D)</option>
+            </select>
         </div>
+
+        <div>
+            <label>Headwear Color</label>
+            <input type="color" id="hatColor" value="#111111">
+        </div>
+
+        <div>
+            <label>Outfit (Torso Geometry)</label>
+            <select id="outfit">
+                <option value="jersey">Pro Sports Jersey</option>
+                <option value="cyber">Cyberpunk Armor</option>
+            </select>
+        </div>
+        
+        <div style="display: flex; gap: 10px;">
+            <div style="flex: 1;">
+                <label>Primary</label>
+                <input type="color" id="outfitColor1" value="#002244">
+            </div>
+            <div style="flex: 1;">
+                <label>Trim</label>
+                <input type="color" id="outfitColor2" value="#69BE28">
+            </div>
+        </div>
+
+        <button class="btn" id="export-btn">Take 3D Snapshot</button>
     </div>
 
     <script>
         // ==========================================
-        // SYSTEM 1: THE 3D NEURAL TRACKER
+        // 1. THREE.JS 3D ENVIRONMENT SETUP
+        // ==========================================
+        const container = document.getElementById('webgl-container');
+        const scene = new THREE.Scene();
+        // Add subtle fog to blend into the background
+        scene.fog = new THREE.FogExp2(0x050505, 0.002);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
+        camera.position.z = 500;
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        scene.add(ambientLight);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight.position.set(0, 200, 100);
+        scene.add(dirLight);
+        const pointLight = new THREE.PointLight(0x00ffcc, 1, 500);
+        pointLight.position.set(0, -100, 200);
+        scene.add(pointLight);
+
+        // ==========================================
+        // 2. PROCEDURAL 3D FACE MESH CONSTRUCTION
+        // ==========================================
+        // We create a master group that will hold the face and all accessories.
+        // This group will rotate and move based on your actual head movements.
+        const headGroup = new THREE.Group();
+        scene.add(headGroup);
+
+        // The Face Mesh (468 vertices)
+        const faceGeometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(468 * 3);
+        faceGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        
+        // Advanced Material: Glowing wireframe + solid points
+        const faceMaterial = new THREE.PointsMaterial({ 
+            color: 0xffcda0, size: 3, transparent: true, opacity: 0.9 
+        });
+        const faceCloud = new THREE.Points(faceGeometry, faceMaterial);
+        headGroup.add(faceCloud);
+
+        // ==========================================
+        // 3. 3D ACCESSORY GENERATION (Headwear & Torso)
+        // ==========================================
+        const hatMaterial = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.7 });
+        const outfitMat1 = new THREE.MeshStandardMaterial({ color: 0x002244 });
+        const outfitMat2 = new THREE.MeshStandardMaterial({ color: 0x69BE28 });
+
+        // --- The Turban / Joora ---
+        const jooraGroup = new THREE.Group();
+        // Base wrap (semi-sphere)
+        const wrapGeo = new THREE.SphereGeometry(75, 32, 16, 0, Math.PI * 2, 0, Math.PI * 0.5);
+        const wrapMesh = new THREE.Mesh(wrapGeo, hatMaterial);
+        wrapMesh.position.y = 20;
+        wrapMesh.rotation.x = -0.2;
+        jooraGroup.add(wrapMesh);
+        // Top Knot
+        const knotGeo = new THREE.TorusGeometry(20, 15, 16, 32);
+        const knotMesh = new THREE.Mesh(knotGeo, hatMaterial);
+        knotMesh.position.set(0, 85, -10);
+        knotMesh.rotation.x = Math.PI / 2;
+        jooraGroup.add(knotMesh);
+        jooraGroup.visible = false;
+        headGroup.add(jooraGroup);
+
+        // --- The Cap ---
+        const capGroup = new THREE.Group();
+        const domeGeo = new THREE.SphereGeometry(70, 32, 16, 0, Math.PI * 2, 0, Math.PI * 0.5);
+        const domeMesh = new THREE.Mesh(domeGeo, hatMaterial);
+        domeMesh.position.y = 30;
+        capGroup.add(domeMesh);
+        const brimGeo = new THREE.CylinderGeometry(75, 75, 5, 32, 1, false, 0, Math.PI);
+        const brimMesh = new THREE.Mesh(brimGeo, hatMaterial);
+        brimMesh.position.set(0, 30, 20);
+        brimMesh.scale.set(1, 1, 1.5);
+        capGroup.add(brimMesh);
+        capGroup.visible = false;
+        headGroup.add(capGroup);
+
+        // --- The Torso (Jersey) ---
+        // Attached to the scene, not the head, so it stays relatively still
+        const torsoGroup = new THREE.Group();
+        const chestGeo = new THREE.CylinderGeometry(90, 120, 200, 32);
+        const chestMesh = new THREE.Mesh(chestGeo, outfitMat1);
+        chestMesh.position.y = -200;
+        torsoGroup.add(chestMesh);
+        
+        // V-Neck Trim
+        const trimGeo = new THREE.TorusGeometry(60, 8, 16, 32);
+        const trimMesh = new THREE.Mesh(trimGeo, outfitMat2);
+        trimMesh.position.set(0, -100, 75);
+        trimMesh.rotation.x = Math.PI / 4;
+        torsoGroup.add(trimMesh);
+        scene.add(torsoGroup);
+
+        // ==========================================
+        // 4. UI EVENT LISTENERS
+        // ==========================================
+        document.getElementById('meshColor').addEventListener('input', (e) => { faceMaterial.color.set(e.target.value); });
+        document.getElementById('hatColor').addEventListener('input', (e) => { hatMaterial.color.set(e.target.value); });
+        document.getElementById('outfitColor1').addEventListener('input', (e) => { outfitMat1.color.set(e.target.value); });
+        document.getElementById('outfitColor2').addEventListener('input', (e) => { outfitMat2.color.set(e.target.value); });
+        
+        document.getElementById('headwear').addEventListener('change', (e) => {
+            jooraGroup.visible = false;
+            capGroup.visible = false;
+            if (e.target.value === 'patka') jooraGroup.visible = true;
+            if (e.target.value === 'cap') capGroup.visible = true;
+        });
+
+        // ==========================================
+        // 5. GOOGLE MEDIAPIPE AI TRACKING
         // ==========================================
         const videoElement = document.getElementById('video-feed');
-        const meshCanvas = document.getElementById('mesh-canvas');
-        const captureBtn = document.getElementById('capture-btn');
-        const nodeStatus = document.getElementById('node-status');
-        
-        let currentLandmarks = null;
+        const aiStatus = document.getElementById('ai-status');
 
-        // Three.js Setup
-        const renderer = new THREE.WebGLRenderer({ canvas: meshCanvas, alpha: true, antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.z = 600;
-
-        // Create 468 vertices for the glowing mesh
-        const geometry = new THREE.BufferGeometry();
-        const positions = new Float32Array(468 * 3);
-        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        const material = new THREE.PointsMaterial({ color: 0x10b981, size: 4.0, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending });
-        const pointCloud = new THREE.Points(geometry, material);
-        scene.add(pointCloud);
-
-        // MediaPipe FaceMesh Setup
         const faceMesh = new FaceMesh({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});
         faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.6, minTrackingConfidence: 0.6 });
 
         faceMesh.onResults((results) => {
+            document.getElementById('loading').style.display = 'none';
+            
             if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
-                currentLandmarks = results.multiFaceLandmarks[0];
-                nodeStatus.innerText = "Tracking: 468 Nodes Locked";
-                captureBtn.disabled = false;
-                captureBtn.innerText = "Snap & Extract DNA";
+                aiStatus.innerText = "AI: 468 Nodes Locked & Tracking";
+                aiStatus.style.color = "#00ffcc";
+                
+                const landmarks = results.multiFaceLandmarks[0];
+                const posArray = faceCloud.geometry.attributes.position.array;
+                
+                // Track center of face to move the whole head group
+                let centerX = 0, centerY = 0, centerZ = 0;
 
-                // Update 3D WebGL points
-                const posArray = pointCloud.geometry.attributes.position.array;
-                for (let i = 0; i < currentLandmarks.length; i++) {
-                    posArray[i * 3] = (currentLandmarks[i].x - 0.5) * -window.innerWidth; // Flip X
-                    posArray[i * 3 + 1] = (currentLandmarks[i].y - 0.5) * -window.innerHeight; // Y
-                    posArray[i * 3 + 2] = currentLandmarks[i].z * 600; // Z depth
+                // Map 2D AI data to 3D WebGL space
+                for (let i = 0; i < landmarks.length; i++) {
+                    const x = (landmarks[i].x - 0.5) * -400; // Scaled for 3D view
+                    const y = (landmarks[i].y - 0.5) * -400;
+                    const z = landmarks[i].z * 400;
+
+                    posArray[i * 3] = x;
+                    posArray[i * 3 + 1] = y;
+                    posArray[i * 3 + 2] = z;
+
+                    if (i === 1) { // Node 1 is the tip of the nose
+                        centerX = x; centerY = y; centerZ = z;
+                    }
                 }
-                pointCloud.geometry.attributes.position.needsUpdate = true;
+                faceCloud.geometry.attributes.position.needsUpdate = true;
+
+                // Calculate Head Rotation based on specific nodes (eyes and chin)
+                const leftEye = landmarks[133];
+                const rightEye = landmarks[362];
+                const chin = landmarks[152];
+                
+                // Apply rotation to the accessories so they follow your head
+                const rotX = (chin.z - leftEye.z) * 2;
+                const rotY = (leftEye.z - rightEye.z) * 2;
+                const rotZ = (leftEye.y - rightEye.y) * 2;
+
+                jooraGroup.position.set(centerX, centerY + 80, centerZ - 20);
+                jooraGroup.rotation.set(rotX, rotY, rotZ);
+
+                capGroup.position.set(centerX, centerY + 60, centerZ - 20);
+                capGroup.rotation.set(rotX, rotY, rotZ);
+
             } else {
-                nodeStatus.innerText = "Scanning for face...";
-                captureBtn.disabled = true;
+                aiStatus.innerText = "AI: Searching for face...";
+                aiStatus.style.color = "#ff3366";
             }
         });
 
@@ -260,283 +293,29 @@
         });
         camFeed.start();
 
-        // 3D Render Loop
-        function animate3D() {
-            requestAnimationFrame(animate3D);
-            if(pointCloud) {
-                // Subtle breathing movement for the mesh
-                pointCloud.rotation.y = Math.sin(Date.now() * 0.001) * 0.05;
-            }
+        // ==========================================
+        // 6. RENDER & EXPORT
+        // ==========================================
+        function animate() {
+            requestAnimationFrame(animate);
+            // Slowly rotate torso for 3D showcase effect
+            torsoGroup.rotation.y = Math.sin(Date.now() * 0.001) * 0.2;
             renderer.render(scene, camera);
         }
-        animate3D();
+        animate();
 
-        // Window Resize
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        // ==========================================
-        // SYSTEM 2: DNA EXTRACTION & TRANSITION
-        // ==========================================
-        captureBtn.addEventListener('click', () => {
-            if(!currentLandmarks) return;
-
-            // 1. Calculate Jaw Math (Distance between cheekbone nodes 234 and 454)
-            const leftCheek = currentLandmarks[234];
-            const rightCheek = currentLandmarks[454];
-            const widthDiff = Math.abs(rightCheek.x - leftCheek.x);
-            // Map AI scale to UI Slider scale (90 to 160)
-            let mappedJaw = Math.floor((widthDiff - 0.25) * (70 / 0.35) + 90);
-            state.faceWidth = Math.max(90, Math.min(160, mappedJaw));
-
-            // 2. Calculate Eye Distance Math (Nodes 133 and 362)
-            const leftEye = currentLandmarks[133];
-            const rightEye = currentLandmarks[362];
-            const eyeDiff = Math.abs(rightEye.x - leftEye.x);
-            let mappedEye = Math.floor((eyeDiff - 0.1) * (40 / 0.15) + 30);
-            state.eyeSpacing = Math.max(30, Math.min(70, mappedEye));
-
-            // 3. Extract Pixel Color for Skin Tone
-            const hCanvas = document.createElement('canvas');
-            hCanvas.width = videoElement.videoWidth; hCanvas.height = videoElement.videoHeight;
-            const hctx = hCanvas.getContext('2d');
-            hctx.drawImage(videoElement, 0, 0);
-            // Sample color right on the tip of the nose (Node 1) for best lighting
-            const noseX = Math.floor(currentLandmarks[1].x * hCanvas.width);
-            const noseY = Math.floor(currentLandmarks[1].y * hCanvas.height);
-            const pixel = hctx.getImageData(noseX, noseY, 1, 1).data;
-            const hexSkin = "#" + ((1 << 24) + (pixel[0] << 16) + (pixel[1] << 8) + pixel[2]).toString(16).slice(1);
-            state.skinTone = hexSkin;
-
-            // 4. Update UI Inputs with AI Data
-            document.getElementById('faceWidth').value = state.faceWidth;
-            document.getElementById('eyeSpacing').value = state.eyeSpacing;
-            document.getElementById('skinTone').value = state.skinTone;
-
-            // 5. Kill Camera, Switch Screens, Build Avatar
-            camFeed.stop();
-            document.getElementById('tracker-screen').style.opacity = 0;
-            setTimeout(() => {
-                document.getElementById('tracker-screen').style.display = 'none';
-                document.getElementById('editor-screen').style.display = 'flex';
-                renderAvatar();
-            }, 500);
-        });
-
-        // ==========================================
-        // SYSTEM 3: ADVANCED 2D AVATAR RENDERER
-        // ==========================================
-        const avCanvas = document.getElementById('avatarCanvas');
-        const ctx = avCanvas.getContext('2d');
-        const cx = avCanvas.width / 2;
-        const cy = avCanvas.height / 2 - 30;
-
-        let state = {
-            skinTone: '#d29972', faceWidth: 125, eyeSpacing: 45,
-            headwear: 'patka', hairStyle: 'fade', hairColor: '#111111',
-            outfit: 'jersey', outfitColor1: '#002244', outfitColor2: '#69BE28'
-        };
-
-        // Attach UI Listeners
-        const inputs = Object.keys(state);
-        inputs.forEach(id => {
-            const el = document.getElementById(id);
-            if(el) {
-                el.addEventListener('input', (e) => {
-                    let val = e.target.value;
-                    if(['faceWidth', 'eyeSpacing'].includes(id)) val = parseInt(val);
-                    state[id] = val;
-                    renderAvatar();
-                });
-            }
-        });
-
-        // Color Math Helper
-        function shade(color, percent) {
-            let R = parseInt(color.substring(1,3),16); let G = parseInt(color.substring(3,5),16); let B = parseInt(color.substring(5,7),16);
-            R = parseInt(R * (100 + percent) / 100); G = parseInt(G * (100 + percent) / 100); B = parseInt(B * (100 + percent) / 100);
-            R = (R<255)?R:255; G = (G<255)?G:255; B = (B<255)?B:255;
-            let RR = ((R.toString(16).length==1)?"0"+R.toString(16):R.toString(16));
-            let GG = ((G.toString(16).length==1)?"0"+G.toString(16):G.toString(16));
-            let BB = ((B.toString(16).length==1)?"0"+B.toString(16):B.toString(16));
-            return "#"+RR+GG+BB;
-        }
-
-        // Main Render Loop
-        function renderAvatar() {
-            ctx.clearRect(0, 0, avCanvas.width, avCanvas.height);
-            
-            drawOutfit();
-            drawNeck();
-            drawHeadShape();
-            drawFaceDetails();
-            
-            if (state.headwear !== 'none') {
-                drawHeadwear();
-            } else {
-                drawHairFront();
-            }
-        }
-
-        function drawNeck() {
-            let nGrad = ctx.createLinearGradient(cx, cy+40, cx, cy+180);
-            nGrad.addColorStop(0, shade(state.skinTone, -40)); 
-            nGrad.addColorStop(1, state.skinTone);
-            ctx.fillStyle = nGrad;
-            ctx.fillRect(cx - 45, cy + 80, 90, 150);
-        }
-
-        function drawOutfit() {
-            const by = cy + 200; // Body Y line
-            
-            ctx.beginPath();
-            ctx.moveTo(cx - 240, avCanvas.height);
-            ctx.quadraticCurveTo(cx - 180, by - 20, cx - 70, by - 40);
-            ctx.lineTo(cx + 70, by - 40);
-            ctx.quadraticCurveTo(cx + 180, by - 20, cx + 240, avCanvas.height);
-            
-            ctx.fillStyle = state.outfitColor1;
-            ctx.fill();
-
-            if (state.outfit === 'jersey') {
-                // V-Neck Detail
-                ctx.strokeStyle = state.outfitColor2; ctx.lineWidth = 25; ctx.lineCap = 'round';
-                ctx.beginPath(); ctx.moveTo(cx - 70, by - 40); ctx.lineTo(cx, by + 50); ctx.lineTo(cx + 70, by - 40); ctx.stroke();
-                
-                // Shoulder Stripes
-                ctx.lineWidth = 35;
-                ctx.beginPath(); ctx.moveTo(cx - 160, by + 10); ctx.lineTo(cx - 260, by + 160); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(cx + 160, by + 10); ctx.lineTo(cx + 260, by + 160); ctx.stroke();
-                
-                // Varsity Number
-                ctx.fillStyle = '#ffffff';
-                ctx.font = "italic 900 170px 'Arial Black', sans-serif";
-                ctx.textAlign = "center";
-                ctx.fillText("12", cx, by + 230);
-                ctx.strokeStyle = state.outfitColor2; ctx.lineWidth = 8;
-                ctx.strokeText("12", cx, by + 230);
-            } else if (state.outfit === 'hoodie') {
-                // Hood Shadow Wrap
-                ctx.fillStyle = shade(state.outfitColor1, -25);
-                ctx.beginPath(); ctx.arc(cx, by - 30, 90, 0, Math.PI, false); ctx.fill();
-                
-                // Draw Strings
-                ctx.strokeStyle = state.outfitColor2; ctx.lineWidth = 12; ctx.lineCap = 'round';
-                ctx.beginPath(); ctx.moveTo(cx - 40, by - 10); ctx.lineTo(cx - 50, by + 110); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(cx + 40, by - 10); ctx.lineTo(cx + 50, by + 130); ctx.stroke();
-            }
-        }
-
-        function drawHeadShape() {
-            let hGrad = ctx.createRadialGradient(cx, cy, 10, cx, cy, state.faceWidth + 60);
-            hGrad.addColorStop(0, shade(state.skinTone, 15));
-            hGrad.addColorStop(0.6, state.skinTone);
-            hGrad.addColorStop(1, shade(state.skinTone, -30)); 
-            
-            ctx.fillStyle = hGrad;
-            ctx.beginPath();
-            const jawY = cy + 120;
-            
-            // Vector curves dynamically controlled by AI `state.faceWidth`
-            ctx.moveTo(cx, jawY);
-            ctx.bezierCurveTo(cx + state.faceWidth - 10, jawY, cx + state.faceWidth + 20, cy - 90, cx, cy - 120);
-            ctx.bezierCurveTo(cx - state.faceWidth - 20, cy - 90, cx - state.faceWidth + 10, jawY, cx, jawY);
-            ctx.fill();
-
-            // Ears
-            ctx.fillStyle = shade(state.skinTone, -15);
-            ctx.beginPath(); ctx.ellipse(cx - state.faceWidth - 5, cy - 10, 18, 28, 0, 0, Math.PI*2); ctx.fill();
-            ctx.beginPath(); ctx.ellipse(cx + state.faceWidth + 5, cy - 10, 18, 28, 0, 0, Math.PI*2); ctx.fill();
-        }
-
-        function drawFaceDetails() {
-            const ex = state.eyeSpacing; 
-            const ey = cy - 25;
-            
-            // Eyes
-            ctx.fillStyle = '#ffffff';
-            ctx.beginPath(); ctx.ellipse(cx - ex, ey, 24, 15, 0, 0, Math.PI*2); ctx.ellipse(cx + ex, ey, 24, 15, 0, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = '#222';
-            ctx.beginPath(); ctx.arc(cx - ex, ey, 11, 0, Math.PI*2); ctx.arc(cx + ex, ey, 11, 0, Math.PI*2); ctx.fill();
-            // Catchlights
-            ctx.fillStyle = '#fff';
-            ctx.beginPath(); ctx.arc(cx - ex + 4, ey - 3, 3, 0, Math.PI*2); ctx.arc(cx + ex + 4, ey - 3, 3, 0, Math.PI*2); ctx.fill();
-
-            // Bold Eyebrows
-            ctx.fillStyle = shade(state.hairColor, -10);
-            ctx.beginPath(); ctx.moveTo(cx - ex - 35, ey - 25); ctx.quadraticCurveTo(cx - ex, ey - 35, cx - ex + 25, ey - 20); ctx.lineTo(cx - ex + 15, ey - 30); ctx.quadraticCurveTo(cx - ex, ey - 45, cx - ex - 35, ey - 35); ctx.fill();
-            ctx.beginPath(); ctx.moveTo(cx + ex + 35, ey - 25); ctx.quadraticCurveTo(cx + ex, ey - 35, cx + ex - 25, ey - 20); ctx.lineTo(cx + ex - 15, ey - 30); ctx.quadraticCurveTo(cx + ex, ey - 45, cx + ex + 35, ey - 35); ctx.fill();
-
-            // Nose
-            ctx.strokeStyle = shade(state.skinTone, -30); ctx.lineWidth = 4; ctx.lineCap = 'round';
-            ctx.beginPath(); ctx.moveTo(cx, cy - 10); ctx.lineTo(cx - 15, cy + 40); ctx.quadraticCurveTo(cx, cy + 55, cx + 15, cy + 35); ctx.stroke();
-
-            // Smirk Mouth
-            ctx.strokeStyle = '#222'; ctx.lineWidth = 6;
-            ctx.beginPath(); ctx.moveTo(cx - 30, cy + 85); ctx.quadraticCurveTo(cx, cy + 115, cx + 35, cy + 75); ctx.stroke();
-            ctx.lineWidth = 3;
-            ctx.beginPath(); ctx.moveTo(cx - 35, cy + 80); ctx.lineTo(cx - 45, cy + 90); ctx.stroke(); // Dimple
-        }
-
-        function drawHairFront() {
-            ctx.fillStyle = state.hairColor;
-            if (state.hairStyle === 'fade') {
-                ctx.fillStyle = shade(state.hairColor, 30); // Fade shadow
-                ctx.beginPath(); ctx.arc(cx, cy - 80, 105, Math.PI, 0, false); ctx.fill();
-                ctx.fillStyle = state.hairColor; // Thick top
-                ctx.beginPath(); ctx.moveTo(cx - 90, cy - 110); ctx.quadraticCurveTo(cx, cy - 190, cx + 90, cy - 110); ctx.quadraticCurveTo(cx, cy - 140, cx - 90, cy - 110); ctx.fill();
-            } else if (state.hairStyle === 'spiky') {
-                ctx.beginPath(); ctx.moveTo(cx - 105, cy - 70); ctx.lineTo(cx - 80, cy - 160); ctx.lineTo(cx - 40, cy - 110); ctx.lineTo(cx, cy - 180); ctx.lineTo(cx + 40, cy - 110); ctx.lineTo(cx + 80, cy - 160); ctx.lineTo(cx + 105, cy - 70); ctx.fill();
-            }
-        }
-
-        function drawHeadwear() {
-            if (state.headwear === 'patka') {
-                const c1 = state.hairColor;
-                const c2 = shade(c1, -25);
-                
-                // Dome Wrap
-                let pGrad = ctx.createLinearGradient(cx - 100, cy - 170, cx + 100, cy - 50);
-                pGrad.addColorStop(0, shade(c1, 15)); pGrad.addColorStop(1, c2);
-                ctx.fillStyle = pGrad;
-                
-                ctx.beginPath();
-                ctx.moveTo(cx - state.faceWidth - 5, cy - 60);
-                ctx.bezierCurveTo(cx - 140, cy - 190, cx, cy - 200, cx, cy - 200);
-                ctx.bezierCurveTo(cx, cy - 200, cx + 140, cy - 190, cx + state.faceWidth + 5, cy - 60);
-                ctx.quadraticCurveTo(cx, cy - 90, cx - state.faceWidth - 5, cy - 60);
-                ctx.fill();
-
-                // Joora Top Knot
-                ctx.beginPath(); ctx.arc(cx, cy - 195, 38, 0, Math.PI*2); ctx.fill();
-
-                // Sharp Vector Folds for Depth
-                ctx.strokeStyle = shade(c2, -15); ctx.lineWidth = 4; ctx.lineCap = 'round';
-                ctx.beginPath(); ctx.moveTo(cx - 25, cy - 180); ctx.quadraticCurveTo(cx - 50, cy - 120, cx - 90, cy - 70); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(cx + 25, cy - 180); ctx.quadraticCurveTo(cx + 50, cy - 120, cx + 90, cy - 70); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(cx, cy - 160); ctx.lineTo(cx, cy - 90); ctx.stroke();
-            } 
-            else if (state.headwear === 'cap') {
-                ctx.fillStyle = state.hairColor;
-                ctx.beginPath(); ctx.arc(cx, cy - 80, state.faceWidth + 5, Math.PI, 0, false); ctx.fill();
-                ctx.fillStyle = shade(state.hairColor, -15);
-                ctx.beginPath(); ctx.moveTo(cx - state.faceWidth - 15, cy - 60); ctx.quadraticCurveTo(cx, cy - 110, cx + 160, cy - 40); ctx.quadraticCurveTo(cx + 160, cy - 20, cx - state.faceWidth - 15, cy - 60); ctx.fill(); 
-            }
-        }
-
-        // ==========================================
-        // SYSTEM 4: EXPORT ENGINE
-        // ==========================================
         document.getElementById('export-btn').addEventListener('click', () => {
             const link = document.createElement('a');
-            link.download = 'Neural_Vector_Avatar.png';
-            link.href = avCanvas.toDataURL('image/png', 1.0);
+            link.download = '3D_WebGL_Avatar.png';
+            link.href = renderer.domElement.toDataURL('image/png');
             link.click();
         });
-
     </script>
 </body>
 </html>
