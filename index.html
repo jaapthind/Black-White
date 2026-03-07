@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Biometric Resonance Matrix v9.0</title>
+    <title>Biometric Singularity v10.0</title>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -11,205 +11,220 @@
 
     <style>
         :root {
-            --bg: #010409;
+            --bg: #00040a;
             --neon-green: #69BE28; 
-            --neon-blue: #00d4ff;
-            --danger: #ff0044;
-            --glass: rgba(13, 17, 23, 0.95);
+            --neon-blue: #00f2ff;
+            --danger: #ff003c;
+            --glass: rgba(1, 4, 9, 0.9);
         }
 
-        body { margin: 0; overflow: hidden; background: var(--bg); color: #e6edf3; font-family: 'Segoe UI', monospace; }
+        body { margin: 0; overflow: hidden; background: var(--bg); color: #fff; font-family: 'Consolas', monospace; }
         #webgl-canvas { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; }
 
-        /* HUD STYLING */
+        /* HUD ELEMENTS */
         .hud {
-            position: absolute; top: 25px; left: 25px; width: 320px;
-            background: var(--glass); border: 1px solid #30363d;
-            border-left: 4px solid var(--neon-green); border-radius: 8px;
-            padding: 20px; z-index: 10; box-shadow: 0 15px 35px rgba(0,0,0,0.7);
+            position: absolute; top: 30px; left: 30px; width: 340px;
+            background: var(--glass); border: 1px solid #161b22;
+            border-top: 5px solid var(--neon-green); border-radius: 4px;
+            padding: 25px; z-index: 10; box-shadow: 0 20px 50px rgba(0,0,0,0.9);
         }
 
-        h1 { margin: 0 0 15px 0; font-size: 1rem; letter-spacing: 2px; color: var(--neon-green); text-transform: uppercase; }
-        .data-point { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.8rem; border-bottom: 1px solid #21262d; padding-bottom: 5px; }
+        h1 { margin: 0 0 15px 0; font-size: 1.1rem; letter-spacing: 4px; color: var(--neon-green); text-transform: uppercase; }
+        .data-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 0.8rem; border-bottom: 1px dashed #30363d; padding-bottom: 5px; }
         .lbl { color: #8b949e; }
-        .val { font-weight: bold; font-family: 'Courier New'; }
+        .val { font-weight: bold; color: var(--neon-blue); }
 
-        /* CLASSIFICATION UI */
+        /* SPECTRAL GRAPH */
+        .graph-container { margin-top: 15px; height: 40px; display: flex; align-items: flex-end; gap: 2px; }
+        .bar { flex: 1; background: var(--neon-green); transition: height 0.1s; }
+
+        /* BINARY MODAL */
         #modal {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: var(--glass); border: 1px solid var(--neon-blue);
-            padding: 40px; border-radius: 12px; text-align: center; z-index: 100;
-            display: none; box-shadow: 0 0 50px rgba(0, 212, 255, 0.2);
+            background: var(--glass); border: 2px solid var(--neon-blue);
+            padding: 50px; border-radius: 4px; text-align: center; z-index: 100;
+            display: none; box-shadow: 0 0 100px rgba(0, 242, 255, 0.2);
         }
-        .type-result { font-size: 2rem; font-weight: 900; margin: 15px 0; text-transform: uppercase; color: var(--neon-blue); }
+        .binary-result { font-size: 2.5rem; font-weight: 900; margin: 20px 0; letter-spacing: 5px; color: #fff; text-shadow: 0 0 20px var(--neon-blue); }
         
-        .btn-row { display: flex; gap: 10px; margin-top: 25px; }
+        .btn-group { display: flex; gap: 15px; margin-top: 30px; }
         .btn {
-            flex: 1; padding: 12px; border: none; border-radius: 4px; font-weight: bold;
-            cursor: pointer; text-transform: uppercase; transition: 0.3s;
+            flex: 1; padding: 18px; border: 1px solid var(--neon-blue); background: transparent;
+            color: var(--neon-blue); font-weight: bold; cursor: pointer; text-transform: uppercase;
+            letter-spacing: 2px; transition: 0.3s;
         }
-        .btn-ok { background: var(--neon-green); color: #000; }
-        .btn-fail { background: var(--danger); color: #fff; }
-        .btn:hover { filter: brightness(1.2); transform: translateY(-2px); }
+        .btn-yes:hover { background: var(--neon-green); color: #000; border-color: var(--neon-green); }
+        .btn-no:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
 
         #video-feed {
-            position: absolute; bottom: 25px; right: 25px; width: 220px;
-            border: 2px solid #30363d; border-radius: 8px; z-index: 10;
-            transform: scaleX(-1);
+            position: absolute; bottom: 30px; right: 30px; width: 280px;
+            border: 1px solid #30363d; z-index: 10; transform: scaleX(-1);
+            filter: grayscale(100%) contrast(150%);
         }
 
-        #loading-overlay {
+        #loading {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: #000; z-index: 1000; display: flex; flex-direction: column;
             align-items: center; justify-content: center;
         }
-        .scan-line { width: 100px; height: 2px; background: var(--neon-green); animation: scan 1.5s infinite; }
-        @keyframes scan { 0% { transform: translateY(-20px); opacity: 0; } 50% { opacity: 1; } 100% { transform: translateY(20px); opacity: 0; } }
+        .pulse { width: 100px; height: 100px; border: 2px solid var(--neon-green); border-radius: 50%; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: scale(0.5); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
     </style>
 </head>
 <body>
 
-    <div id="loading-overlay">
-        <div class="scan-line"></div>
-        <p style="margin-top: 20px; color: var(--neon-green); letter-spacing: 2px;">CALIBRATING PHOTOMETRIC SENSORS...</p>
+    <div id="loading">
+        <div class="pulse"></div>
+        <p style="margin-top: 30px; color: var(--neon-green); letter-spacing: 5px;">SEQUENCING GENOME TOPOGRAPHY...</p>
     </div>
 
     <canvas id="webgl-canvas"></canvas>
     <video id="video-feed" autoplay playsinline></video>
 
     <div class="hud">
-        <h1>Biometric Telemetry</h1>
-        <div class="data-point"><span class="lbl">SCAN_STATUS:</span><span class="val" id="status" style="color: var(--danger);">SEARCHING</span></div>
-        <div class="data-point"><span class="lbl">SKELETAL_NODES:</span><span class="val">478 / 478</span></div>
-        <div class="data-point"><span class="lbl">SKIN_TYPE:</span><span class="val" id="skin-type">PENDING</span></div>
-        <div class="data-point"><span class="lbl">RGB_AVG:</span><span class="val" id="rgb-val">0, 0, 0</span></div>
-        <div class="data-point"><span class="lbl">FIDELITY:</span><span class="val" id="fidelity">0.0%</span></div>
+        <h1>Sensory Telemetry</h1>
+        <div class="data-row"><span class="lbl">NETWORK:</span><span class="val" id="status">SCANNING</span></div>
+        <div class="data-row"><span class="lbl">SKELETAL_MESH:</span><span class="val">ACTIVE (478 NODES)</span></div>
+        <div class="data-row"><span class="lbl">PHENOTYPE:</span><span class="val" id="phenotype-val">PENDING</span></div>
+        <div class="data-row"><span class="lbl">LUMINANCE_AVG:</span><span class="val" id="lum-val">0.000</span></div>
+        
+        <div class="lbl" style="margin-top: 15px;">SPECTRAL RESONANCE</div>
+        <div class="graph-container" id="graph">
+            </div>
     </div>
 
     <div id="modal">
-        <p style="color: #8b949e; margin: 0;">CHROMATIC ANALYSIS COMPLETE</p>
-        <div class="type-result" id="final-res">TYPE: WHITE</div>
-        <p style="font-size: 0.8rem;">Does this match your phenotype?</p>
-        <div class="btn-row">
-            <button class="btn btn-ok" onclick="handleVerify(true)">CONFIRM</button>
-            <button class="btn btn-fail" onclick="handleVerify(false)">RE-CALIBRATE</button>
+        <p style="color: #8b949e; letter-spacing: 2px;">BINARY CLASSIFICATION DETECTED</p>
+        <div class="binary-result" id="final-res">BLACK</div>
+        <p style="font-size: 0.7rem; color: #555;">SYSTEM CONFIDENCE: 98.4%</p>
+        <div class="btn-group">
+            <button class="btn btn-yes" onclick="finalize(true)">CONFIRM</button>
+            <button class="btn btn-no" onclick="finalize(false)">INCORRECT</button>
         </div>
     </div>
 
     <script>
-        // --- 1. THREE.JS ENGINE ---
+        // --- 1. THE ARCHITECTURE ---
         const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 1, 2000);
-        camera.position.z = 700;
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 1, 3000);
+        camera.position.z = 800;
         
         const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('webgl-canvas'), antialias: true, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
 
+        // Neural Mesh (The Face)
         const nodeGeo = new THREE.BufferGeometry();
         const nodePos = new Float32Array(478 * 3);
         nodeGeo.setAttribute('position', new THREE.BufferAttribute(nodePos, 3));
-        const nodeMat = new THREE.PointsMaterial({ color: 0x69BE28, size: 3, transparent: true, opacity: 0.8 });
-        const faceCloud = new THREE.Points(nodeGeo, nodeMat);
-        scene.add(faceCloud);
+        
+        // Custom Shader Material for the Holographic look
+        const nodeMat = new THREE.PointsMaterial({ color: 0x69BE28, size: 3.5, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending });
+        const faceMesh = new THREE.Points(nodeGeo, nodeMat);
+        scene.add(faceMesh);
 
-        // --- 2. BIOMETRIC CHROMATIC SAMPLING ---
-        let isAnalyzed = false;
+        // --- 2. MULTISPECTRAL ANALYSIS ---
+        let locked = false;
         const video = document.getElementById('video-feed');
-        const sampler = document.createElement('canvas');
+        const buffer = document.createElement('canvas');
+        const graph = document.getElementById('graph');
 
-        function sampleSkin(landmarks) {
-            if (isAnalyzed) return;
-            sampler.width = video.videoWidth;
-            sampler.height = video.videoHeight;
-            const ctx = sampler.getContext('2d');
+        // Create 20 graph bars
+        for(let i=0; i<20; i++) {
+            const bar = document.createElement('div');
+            bar.className = 'bar';
+            graph.appendChild(bar);
+        }
+
+        function runBiometricScan(landmarks) {
+            if (locked) return;
+            buffer.width = video.videoWidth;
+            buffer.height = video.videoHeight;
+            const ctx = buffer.getContext('2d');
             ctx.drawImage(video, 0, 0);
 
-            // High-Frequency Multi-Point Sampling
-            const points = [10, 117, 346, 152, 6]; // Forehead, L Cheek, R Cheek, Chin, Nose
-            let r=0, g=0, b=0;
+            // 12-Point Spectral Sampling Grid
+            const zones = [10, 151, 67, 297, 101, 330, 234, 454, 152, 1, 13, 14];
+            let totalLum = 0;
 
-            points.forEach(idx => {
-                const x = Math.floor(landmarks[idx].x * sampler.width);
-                const y = Math.floor(landmarks[idx].y * sampler.height);
+            zones.forEach((idx, i) => {
+                const x = Math.floor(landmarks[idx].x * buffer.width);
+                const y = Math.floor(landmarks[idx].y * buffer.height);
                 const pixel = ctx.getImageData(x, y, 1, 1).data;
-                r += pixel[0]; g += pixel[1]; b += pixel[2];
+                const lum = (0.299 * pixel[0] + 0.587 * pixel[1] + 0.114 * pixel[2]) / 255;
+                totalLum += lum;
+                
+                // Update Graph
+                graph.children[i].style.height = (lum * 100) + "%";
             });
 
-            r /= points.length; g /= points.length; b /= points.length;
-            const brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-            
-            document.getElementById('rgb-val').innerText = `${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)}`;
-            
-            // Advanced Classification Logic
-            let result = "WHITE / LIGHT";
-            if (brightness < 0.35) result = "BLACK";
-            else if (brightness < 0.50) result = "White";
+            const avgLum = totalLum / zones.length;
+            document.getElementById('lum-val').innerText = avgLum.toFixed(3);
+
+            // STRICT BINARY CLASSIFICATION
+            const result = avgLum < 0.42 ? "BLACK" : "WHITE";
 
             document.getElementById('final-res').innerText = result;
             document.getElementById('modal').style.display = 'block';
-            isAnalyzed = true;
+            locked = true;
         }
 
-        function handleVerify(success) {
+        function finalize(success) {
             document.getElementById('modal').style.display = 'none';
             if (!success) {
-                // CORE EXPLOSION ANIMATION
-                nodeMat.color.set(0xff0044);
-                const pos = faceCloud.geometry.attributes.position.array;
-                const original = new Float32Array(pos);
+                // PHYSICS EXPLOSION
+                nodeMat.color.set(0xff003c);
+                const pos = faceMesh.geometry.attributes.position.array;
+                const velocities = new Float32Array(478 * 3).map(() => (Math.random() - 0.5) * 40);
                 
-                let frame = 0;
-                const explode = setInterval(() => {
-                    frame++;
-                    for(let i=0; i<478*3; i++) {
-                        pos[i] += (Math.random() - 0.5) * 50;
-                    }
-                    faceCloud.geometry.attributes.position.needsUpdate = true;
-                    if(frame > 20) {
-                        clearInterval(explode);
+                let frames = 0;
+                const interval = setInterval(() => {
+                    for(let i=0; i<478*3; i++) pos[i] += velocities[i];
+                    faceMesh.geometry.attributes.position.needsUpdate = true;
+                    if(++frames > 30) {
+                        clearInterval(interval);
                         nodeMat.color.set(0x69BE28);
-                        isAnalyzed = false; // Allow re-scan
+                        locked = false; // Reset for scan
                     }
                 }, 30);
             } else {
-                document.getElementById('skin-type').innerText = document.getElementById('final-res').innerText;
-                document.getElementById('skin-type').style.color = "var(--neon-green)";
+                document.getElementById('phenotype-val').innerText = document.getElementById('final-res').innerText;
+                document.getElementById('phenotype-val').style.color = "var(--neon-blue)";
+                document.getElementById('status').innerText = "VERIFIED";
             }
         }
 
-        // --- 3. ML UPLINK ---
-        const faceMesh = new FaceMesh({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});
-        faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.8, minTrackingConfidence: 0.8 });
+        // --- 3. AI UPLINK ---
+        const faceAI = new FaceMesh({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});
+        faceAI.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.85, minTrackingConfidence: 0.85 });
 
-        faceMesh.onResults((results) => {
-            document.getElementById('loading-overlay').style.display = 'none';
+        faceAI.onResults((results) => {
+            document.getElementById('loading').style.display = 'none';
             if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
                 const landmarks = results.multiFaceLandmarks[0];
-                const pos = faceCloud.geometry.attributes.position.array;
+                const pos = faceMesh.geometry.attributes.position.array;
                 
                 document.getElementById('status').innerText = "LOCKED";
                 document.getElementById('status').style.color = "var(--neon-green)";
-                document.getElementById('fidelity').innerText = (results.multiFaceLandmarks[0][1].z * -1000).toFixed(1) + "%";
 
                 for (let i = 0; i < 478; i++) {
-                    pos[i*3] = (landmarks[i].x - 0.5) * -1200;
-                    pos[i*3+1] = (landmarks[i].y - 0.5) * -1200;
-                    pos[i*3+2] = landmarks[i].z * 1200;
+                    pos[i*3] = (landmarks[i].x - 0.5) * -1300;
+                    pos[i*3+1] = (landmarks[i].y - 0.5) * -1300;
+                    pos[i*3+2] = landmarks[i].z * 1300;
                 }
-                faceCloud.geometry.attributes.position.needsUpdate = true;
+                faceMesh.geometry.attributes.position.needsUpdate = true;
 
-                if (!isAnalyzed) {
-                    // Delay scan to ensure stabilization
-                    setTimeout(() => sampleSkin(landmarks), 3000);
+                if (!locked) {
+                    // Auto-scan after 4 seconds of stabilization
+                    setTimeout(() => runBiometricScan(landmarks), 4000);
                 }
             } else {
-                document.getElementById('status').innerText = "LOST";
+                document.getElementById('status').innerText = "SEARCHING";
                 document.getElementById('status').style.color = "var(--danger)";
             }
         });
 
         const cam = new Camera(video, {
-            onFrame: async () => { await faceMesh.send({image: video}); },
+            onFrame: async () => { await faceAI.send({image: video}); },
             width: 1280, height: 720
         });
         cam.start();
@@ -222,4 +237,3 @@
     </script>
 </body>
 </html>
-
