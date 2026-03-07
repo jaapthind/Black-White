@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Biometric Singularity v10.0</title>
+    <title>Biometric Matrix v12.0 | Thermal Edition</title>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -11,17 +11,17 @@
 
     <style>
         :root {
-            --bg: #00040a;
+            --bg: #000308;
             --neon-green: #69BE28; 
-            --neon-blue: #00f2ff;
-            --danger: #ff003c;
-            --glass: rgba(1, 4, 9, 0.9);
+            --thermal-hot: #ff4500;
+            --thermal-cold: #0000ff;
+            --glass: rgba(1, 4, 9, 0.95);
         }
 
         body { margin: 0; overflow: hidden; background: var(--bg); color: #fff; font-family: 'Consolas', monospace; }
         #webgl-canvas { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; }
 
-        /* HUD ELEMENTS */
+        /* HUD STYLING */
         .hud {
             position: absolute; top: 30px; left: 30px; width: 340px;
             background: var(--glass); border: 1px solid #161b22;
@@ -32,205 +32,175 @@
         h1 { margin: 0 0 15px 0; font-size: 1.1rem; letter-spacing: 4px; color: var(--neon-green); text-transform: uppercase; }
         .data-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 0.8rem; border-bottom: 1px dashed #30363d; padding-bottom: 5px; }
         .lbl { color: #8b949e; }
-        .val { font-weight: bold; color: var(--neon-blue); }
+        .val { font-weight: bold; }
 
-        /* SPECTRAL GRAPH */
-        .graph-container { margin-top: 15px; height: 40px; display: flex; align-items: flex-end; gap: 2px; }
-        .bar { flex: 1; background: var(--neon-green); transition: height 0.1s; }
+        /* TOGGLE SWITCH */
+        .switch-container { margin-top: 20px; display: flex; align-items: center; justify-content: space-between; background: #000; padding: 10px; border-radius: 4px; border: 1px solid #30363d; }
+        .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--neon-green); }
+        input:checked + .slider:before { transform: translateX(26px); }
 
-        /* BINARY MODAL */
+        /* MODAL */
         #modal {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: var(--glass); border: 2px solid var(--neon-blue);
+            background: var(--glass); border: 2px solid #00f2ff;
             padding: 50px; border-radius: 4px; text-align: center; z-index: 100;
             display: none; box-shadow: 0 0 100px rgba(0, 242, 255, 0.2);
         }
-        .binary-result { font-size: 2.5rem; font-weight: 900; margin: 20px 0; letter-spacing: 5px; color: #fff; text-shadow: 0 0 20px var(--neon-blue); }
-        
         .btn-group { display: flex; gap: 15px; margin-top: 30px; }
-        .btn {
-            flex: 1; padding: 18px; border: 1px solid var(--neon-blue); background: transparent;
-            color: var(--neon-blue); font-weight: bold; cursor: pointer; text-transform: uppercase;
-            letter-spacing: 2px; transition: 0.3s;
-        }
-        .btn-yes:hover { background: var(--neon-green); color: #000; border-color: var(--neon-green); }
-        .btn-no:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
+        .btn { flex: 1; padding: 15px; border: 1px solid #00f2ff; background: transparent; color: #00f2ff; cursor: pointer; text-transform: uppercase; font-weight: bold; }
+        .btn:hover { background: var(--neon-green); color: #000; border-color: var(--neon-green); }
 
-        #video-feed {
-            position: absolute; bottom: 30px; right: 30px; width: 280px;
-            border: 1px solid #30363d; z-index: 10; transform: scaleX(-1);
-            filter: grayscale(100%) contrast(150%);
-        }
+        #video-feed { position: absolute; bottom: 30px; right: 30px; width: 280px; border: 1px solid #30363d; z-index: 10; transform: scaleX(-1); }
 
-        #loading {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; z-index: 1000; display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-        }
-        .pulse { width: 100px; height: 100px; border: 2px solid var(--neon-green); border-radius: 50%; animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { transform: scale(0.5); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
+        /* RAINBOW OVERLAY */
+        #rainbow-strobe { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 5; pointer-events: none; opacity: 0; }
     </style>
 </head>
 <body>
 
-    <div id="loading">
-        <div class="pulse"></div>
-        <p style="margin-top: 30px; color: var(--neon-green); letter-spacing: 5px;">SEQUENCING GENOME TOPOGRAPHY...</p>
-    </div>
-
+    <div id="rainbow-strobe"></div>
     <canvas id="webgl-canvas"></canvas>
     <video id="video-feed" autoplay playsinline></video>
 
     <div class="hud">
-        <h1>Sensory Telemetry</h1>
+        <h1>Sensory Matrix v12.0</h1>
         <div class="data-row"><span class="lbl">NETWORK:</span><span class="val" id="status">SCANNING</span></div>
-        <div class="data-row"><span class="lbl">SKELETAL_MESH:</span><span class="val">ACTIVE (478 NODES)</span></div>
+        <div class="data-row"><span class="lbl">LUMINANCE:</span><span class="val" id="lum-val">0.000</span></div>
         <div class="data-row"><span class="lbl">PHENOTYPE:</span><span class="val" id="phenotype-val">PENDING</span></div>
-        <div class="data-row"><span class="lbl">LUMINANCE_AVG:</span><span class="val" id="lum-val">0.000</span></div>
         
-        <div class="lbl" style="margin-top: 15px;">SPECTRAL RESONANCE</div>
-        <div class="graph-container" id="graph">
-            </div>
+        <div class="switch-container">
+            <span class="lbl">THERMAL OVERLAY</span>
+            <label class="switch">
+                <input type="checkbox" id="thermal-toggle">
+                <span class="slider"></span>
+            </label>
+        </div>
     </div>
 
     <div id="modal">
-        <p style="color: #8b949e; letter-spacing: 2px;">BINARY CLASSIFICATION DETECTED</p>
-        <div class="binary-result" id="final-res">BLACK</div>
-        <p style="font-size: 0.7rem; color: #555;">SYSTEM CONFIDENCE: 98.4%</p>
+        <p style="color: #8b949e;">BINARY CLASSIFICATION DETECTED</p>
+        <div style="font-size: 2.5rem; font-weight: 900; margin: 20px 0;" id="final-res">BLACK</div>
         <div class="btn-group">
-            <button class="btn btn-yes" onclick="finalize(true)">CONFIRM</button>
-            <button class="btn btn-no" onclick="finalize(false)">INCORRECT</button>
+            <button class="btn" onclick="finalize(true)">CONFIRM</button>
+            <button class="btn" onclick="finalize(false)" style="border-color: #ff003c; color: #ff003c;">INCORRECT</button>
         </div>
     </div>
 
     <script>
-        // --- 1. THE ARCHITECTURE ---
+        // --- 1. THREE.JS ENGINE ---
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 1, 3000);
-        camera.position.z = 800;
-        
+        camera.position.z = 850;
         const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('webgl-canvas'), antialias: true, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
 
-        // Neural Mesh (The Face)
         const nodeGeo = new THREE.BufferGeometry();
         const nodePos = new Float32Array(478 * 3);
+        const nodeColors = new Float32Array(478 * 3); // Per-vertex coloring
         nodeGeo.setAttribute('position', new THREE.BufferAttribute(nodePos, 3));
+        nodeGeo.setAttribute('color', new THREE.BufferAttribute(nodeColors, 3));
         
-        // Custom Shader Material for the Holographic look
-        const nodeMat = new THREE.PointsMaterial({ color: 0x69BE28, size: 3.5, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending });
+        const nodeMat = new THREE.PointsMaterial({ size: 4.5, vertexColors: true, transparent: true, opacity: 0.9 });
         const faceMesh = new THREE.Points(nodeGeo, nodeMat);
         scene.add(faceMesh);
 
-        // --- 2. MULTISPECTRAL ANALYSIS ---
+        // --- 2. BIOMETRIC & THERMAL LOGIC ---
+        let thermalActive = false;
         let locked = false;
+        let rainbowActive = false;
         const video = document.getElementById('video-feed');
         const buffer = document.createElement('canvas');
-        const graph = document.getElementById('graph');
 
-        // Create 20 graph bars
-        for(let i=0; i<20; i++) {
-            const bar = document.createElement('div');
-            bar.className = 'bar';
-            graph.appendChild(bar);
+        document.getElementById('thermal-toggle').addEventListener('change', (e) => {
+            thermalActive = e.target.checked;
+        });
+
+        function getThermalColor(lum) {
+            // Classic Ironbow Spectrum: Blue (Cold) -> Purple -> Red -> Orange -> Yellow (Hot)
+            if (lum < 0.25) return new THREE.Color(0, 0, lum * 4); // Blue
+            if (lum < 0.5) return new THREE.Color((lum-0.25)*4, 0, 1); // Purple/Red
+            if (lum < 0.75) return new THREE.Color(1, (lum-0.5)*4, 0); // Orange
+            return new THREE.Color(1, 1, (lum-0.75)*4); // Yellow/White
         }
 
-        function runBiometricScan(landmarks) {
+        function runScan(landmarks) {
             if (locked) return;
-            buffer.width = video.videoWidth;
-            buffer.height = video.videoHeight;
+            buffer.width = video.videoWidth; buffer.height = video.videoHeight;
             const ctx = buffer.getContext('2d');
             ctx.drawImage(video, 0, 0);
 
-            // 12-Point Spectral Sampling Grid
-            const zones = [10, 151, 67, 297, 101, 330, 234, 454, 152, 1, 13, 14];
-            let totalLum = 0;
-
-            zones.forEach((idx, i) => {
-                const x = Math.floor(landmarks[idx].x * buffer.width);
-                const y = Math.floor(landmarks[idx].y * buffer.height);
-                const pixel = ctx.getImageData(x, y, 1, 1).data;
-                const lum = (0.299 * pixel[0] + 0.587 * pixel[1] + 0.114 * pixel[2]) / 255;
-                totalLum += lum;
-                
-                // Update Graph
-                graph.children[i].style.height = (lum * 100) + "%";
-            });
-
-            const avgLum = totalLum / zones.length;
+            const nosePixel = ctx.getImageData(Math.floor(landmarks[1].x * buffer.width), Math.floor(landmarks[1].y * buffer.height), 1, 1).data;
+            const avgLum = (0.299 * nosePixel[0] + 0.587 * nosePixel[1] + 0.114 * nosePixel[2]) / 255;
+            
             document.getElementById('lum-val').innerText = avgLum.toFixed(3);
-
-            // STRICT BINARY CLASSIFICATION
-            const result = avgLum < 0.42 ? "BLACK" : "WHITE";
-
-            document.getElementById('final-res').innerText = result;
+            document.getElementById('final-res').innerText = avgLum < 0.42 ? "BLACK" : "WHITE";
             document.getElementById('modal').style.display = 'block';
             locked = true;
         }
 
         function finalize(success) {
             document.getElementById('modal').style.display = 'none';
-            if (!success) {
-                // PHYSICS EXPLOSION
-                nodeMat.color.set(0xff003c);
-                const pos = faceMesh.geometry.attributes.position.array;
-                const velocities = new Float32Array(478 * 3).map(() => (Math.random() - 0.5) * 40);
-                
-                let frames = 0;
-                const interval = setInterval(() => {
-                    for(let i=0; i<478*3; i++) pos[i] += velocities[i];
-                    faceMesh.geometry.attributes.position.needsUpdate = true;
-                    if(++frames > 30) {
-                        clearInterval(interval);
-                        nodeMat.color.set(0x69BE28);
-                        locked = false; // Reset for scan
-                    }
-                }, 30);
-            } else {
+            if (success) {
+                rainbowActive = true;
                 document.getElementById('phenotype-val').innerText = document.getElementById('final-res').innerText;
-                document.getElementById('phenotype-val').style.color = "var(--neon-blue)";
-                document.getElementById('status').innerText = "VERIFIED";
+                document.getElementById('rainbow-strobe').style.opacity = '0.3';
+            } else {
+                locked = false; // Simple reset for this version
             }
         }
 
         // --- 3. AI UPLINK ---
         const faceAI = new FaceMesh({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});
-        faceAI.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.85, minTrackingConfidence: 0.85 });
+        faceAI.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.8, minTrackingConfidence: 0.8 });
 
         faceAI.onResults((results) => {
-            document.getElementById('loading').style.display = 'none';
             if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
                 const landmarks = results.multiFaceLandmarks[0];
                 const pos = faceMesh.geometry.attributes.position.array;
+                const colors = faceMesh.geometry.attributes.color.array;
                 
-                document.getElementById('status').innerText = "LOCKED";
-                document.getElementById('status').style.color = "var(--neon-green)";
+                buffer.width = video.videoWidth; buffer.height = video.videoHeight;
+                const ctx = buffer.getContext('2d');
+                ctx.drawImage(video, 0, 0);
 
                 for (let i = 0; i < 478; i++) {
                     pos[i*3] = (landmarks[i].x - 0.5) * -1300;
                     pos[i*3+1] = (landmarks[i].y - 0.5) * -1300;
                     pos[i*3+2] = landmarks[i].z * 1300;
+
+                    let c = new THREE.Color(0x69BE28); // Default Action Green
+                    
+                    if (thermalActive) {
+                        const px = Math.floor(landmarks[i].x * buffer.width);
+                        const py = Math.floor(landmarks[i].y * buffer.height);
+                        const data = ctx.getImageData(px, py, 1, 1).data;
+                        const l = (0.299*data[0] + 0.587*data[1] + 0.114*data[2]) / 255;
+                        c = getThermalColor(l);
+                    } else if (rainbowActive) {
+                        c.setHSL((Date.now() * 0.001 + i/478) % 1, 1, 0.5);
+                    }
+
+                    colors[i*3] = c.r; colors[i*3+1] = c.g; colors[i*3+2] = c.b;
                 }
                 faceMesh.geometry.attributes.position.needsUpdate = true;
+                faceMesh.geometry.attributes.color.needsUpdate = true;
 
-                if (!locked) {
-                    // Auto-scan after 4 seconds of stabilization
-                    setTimeout(() => runBiometricScan(landmarks), 4000);
-                }
-            } else {
-                document.getElementById('status').innerText = "SEARCHING";
-                document.getElementById('status').style.color = "var(--danger)";
+                if (!locked) setTimeout(() => runScan(landmarks), 4000);
             }
         });
 
-        const cam = new Camera(video, {
-            onFrame: async () => { await faceAI.send({image: video}); },
-            width: 1280, height: 720
-        });
-        cam.start();
+        new Camera(video, { onFrame: async () => { await faceAI.send({image: video}); }, width: 1280, height: 720 }).start();
 
         function animate() {
             requestAnimationFrame(animate);
+            if (rainbowActive) {
+                const strobe = document.getElementById('rainbow-strobe');
+                strobe.style.background = `hsl(${Date.now() % 360}, 100%, 50%)`;
+            }
             renderer.render(scene, camera);
         }
         animate();
