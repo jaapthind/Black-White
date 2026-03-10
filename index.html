@@ -2,225 +2,695 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Overlord v16.0 | Master Thermal Raster</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>OVERLORD OS // V19.0.0-BETA // APEX RASTER</title>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+    
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
 
     <style>
         :root {
-            --bg: #000205;
-            --action-green: #69BE28; 
-            --neon-blue: #00f2ff;
-            --panel: rgba(2, 6, 12, 0.95);
+            --bg-base: #000000;
+            --core-cyan: #00f2ff;
+            --core-cyan-dim: rgba(0, 242, 255, 0.2);
+            --alert-red: #ff003c;
+            --warn-amber: #ffaa00;
+            --safe-green: #39ff14;
+            --ui-bg: rgba(2, 6, 12, 0.7);
+            --ui-border: rgba(0, 242, 255, 0.3);
+            --font-main: 'Consolas', 'Courier New', monospace;
         }
 
-        body { margin: 0; overflow: hidden; background: var(--bg); color: #fff; font-family: 'Consolas', monospace; }
-        #webgl-canvas { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; }
-
-        /* --- ADVANCED HUD --- */
-        .hud {
-            position: absolute; top: 20px; left: 20px; width: 380px;
-            background: var(--panel); border: 1px solid #1e293b;
-            border-left: 5px solid var(--action-green); border-radius: 4px;
-            padding: 25px; z-index: 10; box-shadow: 0 0 40px rgba(0,0,0,0.9);
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+        
+        body {
+            background-color: var(--bg-base);
+            color: var(--core-cyan);
+            font-family: var(--font-main);
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
         }
 
-        h1 { margin: 0 0 15px 0; font-size: 1.2rem; letter-spacing: 5px; color: var(--action-green); text-transform: uppercase; border-bottom: 1px solid #334155; padding-bottom: 10px; }
-        .data-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.8rem; }
-        .lbl { color: #64748b; font-weight: bold; }
-        .val { font-weight: bold; color: var(--neon-blue); }
-
-        /* --- THE TOGGLE SWITCH --- */
-        .tgl-container { margin-top: 20px; padding-top: 20px; border-top: 1px solid #334155; display: flex; align-items: center; justify-content: space-between; }
-        .switch { position: relative; width: 60px; height: 30px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #0f172a; transition: .4s; border-radius: 34px; border: 1px solid #334155; }
-        .slider:before { position: absolute; content: ""; height: 22px; width: 22px; left: 4px; bottom: 3px; background-color: #475569; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: var(--action-green); border-color: var(--action-green); }
-        input:checked + .slider:before { transform: translateX(28px); background-color: #000; }
-
-        /* --- RESULT MODAL --- */
-        #modal {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: var(--panel); border: 2px solid var(--neon-blue);
-            padding: 60px; border-radius: 8px; text-align: center; z-index: 100;
-            display: none; box-shadow: 0 0 100px rgba(0, 242, 255, 0.4);
+        /* CRT SCANLINES & VIGNETTE */
+        body::before {
+            content: " ";
+            display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 999; background-size: 100% 2px, 3px 100%; pointer-events: none;
         }
-        .res-text { font-size: 3rem; font-weight: 900; margin: 20px 0; letter-spacing: 10px; }
-        .btn-group { display: flex; gap: 20px; margin-top: 40px; }
-        .btn { flex: 1; padding: 20px; border: 1px solid var(--neon-blue); background: transparent; color: var(--neon-blue); font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; }
-        .btn:hover { background: var(--action-green); color: #000; border-color: var(--action-green); }
+        body::after {
+            content: ""; position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: radial-gradient(circle, rgba(0,0,0,0) 60%, rgba(0,0,0,0.8) 100%);
+            z-index: 1000; pointer-events: none;
+        }
 
-        #video-feed { position: absolute; bottom: 30px; right: 30px; width: 320px; border: 1px solid #334155; z-index: 10; transform: scaleX(-1); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        #rainbow-strobe { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 5; pointer-events: none; opacity: 0; }
+        #webgl-container { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; }
+        
+        /* HARDWARE ACCELERATED UI LAYER */
+        #ui-layer {
+            position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 10; display: grid;
+            grid-template-columns: 350px 1fr 350px;
+            grid-template-rows: 80px 1fr 200px;
+            padding: 20px; gap: 20px; pointer-events: none;
+        }
+
+        .panel {
+            background: var(--ui-bg); border: 1px solid var(--ui-border);
+            backdrop-filter: blur(8px); padding: 15px;
+            box-shadow: inset 0 0 20px rgba(0, 242, 255, 0.05), 0 5px 15px rgba(0,0,0,0.8);
+            position: relative; overflow: hidden;
+        }
+
+        .panel::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 10px; height: 10px;
+            border-top: 2px solid var(--core-cyan); border-left: 2px solid var(--core-cyan);
+        }
+        .panel::after {
+            content: ''; position: absolute; bottom: 0; right: 0; width: 10px; height: 10px;
+            border-bottom: 2px solid var(--core-cyan); border-right: 2px solid var(--core-cyan);
+        }
+
+        .header { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--core-cyan-dim); padding-bottom: 10px; }
+        .sys-title { font-size: 24px; font-weight: 900; letter-spacing: 8px; text-shadow: 0 0 10px var(--core-cyan); animation: glitch 4s infinite; }
+        .sys-clock { font-size: 14px; letter-spacing: 2px; }
+
+        .left-col { grid-column: 1 / 2; grid-row: 2 / 3; display: flex; flex-direction: column; gap: 15px; }
+        .right-col { grid-column: 3 / 4; grid-row: 2 / 3; display: flex; flex-direction: column; gap: 15px; }
+        .bottom-row { grid-column: 1 / -1; grid-row: 3 / 4; display: flex; gap: 15px; }
+
+        .data-block { margin-bottom: 15px; }
+        .data-label { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 4px; }
+        .data-value { font-size: 18px; font-weight: bold; letter-spacing: 1px; color: var(--safe-green); text-shadow: 0 0 8px var(--safe-green); }
+        .data-value.warn { color: var(--warn-amber); text-shadow: 0 0 8px var(--warn-amber); }
+        .data-value.danger { color: var(--alert-red); text-shadow: 0 0 8px var(--alert-red); animation: flash 0.5s infinite; }
+
+        .progress-container { width: 100%; height: 6px; background: #111; border: 1px solid #333; margin-top: 5px; position: relative; }
+        .progress-bar { height: 100%; background: var(--core-cyan); width: 0%; transition: width 0.1s linear; box-shadow: 0 0 10px var(--core-cyan); }
+        .progress-markers { position: absolute; top: -2px; left: 70%; width: 2px; height: 10px; background: var(--alert-red); }
+
+        #raw-video { width: 100%; height: auto; border: 1px solid var(--ui-border); filter: grayscale(100%) contrast(1.5) brightness(0.8); transform: scaleX(-1); }
+        #lux-canvas { width: 100%; height: 60px; background: #000; border: 1px solid var(--ui-border); margin-top: 10px; }
+        #terminal-out { font-size: 9px; color: #aaa; line-height: 1.2; height: 150px; overflow-y: hidden; word-wrap: break-word; }
+
+        /* OVERLAYS */
+        #boot-sequence {
+            position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 5000;
+            display: flex; flex-direction: column; justify-content: center; align-items: flex-start; padding: 50px;
+            font-size: 14px; color: var(--core-cyan);
+        }
+        
+        #lockout-screen {
+            position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(20, 0, 0, 0.9); z-index: 4000;
+            display: none; flex-direction: column; justify-content: center; align-items: center; border: 20px solid var(--alert-red);
+        }
+        .lockout-text { font-size: 5rem; font-weight: 900; color: var(--alert-red); text-shadow: 0 0 40px var(--alert-red); letter-spacing: 15px; margin-bottom: 20px; }
+        .lockout-sub { font-size: 1.5rem; color: #fff; letter-spacing: 5px; background: var(--alert-red); padding: 5px 20px; }
+
+        @keyframes glitch {
+            0% { transform: translate(0) }
+            20% { transform: translate(-2px, 1px) }
+            40% { transform: translate(-1px, -1px) }
+            60% { transform: translate(2px, 1px) }
+            80% { transform: translate(1px, -1px) }
+            100% { transform: translate(0) }
+        }
+        @keyframes flash { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        /* RESPONSIVE FLUIDITY */
+        @media (max-width: 1024px) {
+            #ui-layer { grid-template-columns: 250px 1fr 250px; }
+        }
+        @media (max-width: 768px) {
+            #ui-layer { display: flex; flex-direction: column; overflow-y: auto; pointer-events: auto; }
+            .panel { margin-bottom: 10px; }
+            .bottom-row { flex-direction: column; }
+            #boot-sequence { padding: 20px; font-size: 10px; }
+            .lockout-text { font-size: 2.5rem; }
+        }
     </style>
 </head>
 <body>
 
-    <div id="rainbow-strobe"></div>
-    <canvas id="webgl-canvas"></canvas>
-    <video id="video-feed" autoplay playsinline></video>
+    <video id="cam-feed" autoplay playsinline style="display: none;"></video>
+    <canvas id="analysis-buffer" style="display: none;"></canvas>
 
-    <div class="hud">
-        <h1>Overlord v16.0</h1>
-        <div class="data-row"><span class="lbl">UPLINK:</span><span class="val" id="status">INITIATING</span></div>
-        <div class="data-row"><span class="lbl">SENSORS:</span><span class="val">956 NODES</span></div>
-        <div class="data-row"><span class="lbl">PHENOTYPE:</span><span class="val" id="p-val">ANALYZING</span></div>
-        
-        <div class="tgl-container">
-            <span class="lbl" style="color: #fff;">ACTUAL THERMAL MAP</span>
-            <label class="switch">
-                <input type="checkbox" id="thermal-switch" checked>
-                <span class="slider"></span>
-            </label>
-        </div>
+    <div id="webgl-container"></div>
+
+    <div id="boot-sequence" onclick="initOS()">
+        <div style="font-size: 2rem; margin-bottom: 20px; animation: flash 1s infinite;">[ CLICK TO INITIALIZE KERNEL ]</div>
+        <div id="boot-log"></div>
     </div>
 
-    <div id="modal">
-        <p style="color: #64748b; letter-spacing: 3px;">BIOMETRIC CLASSIFICATION</p>
-        <div class="res-text" id="final-res">BLACK</div>
-        <div class="btn-group">
-            <button class="btn" onclick="finalize(true)">CONFIRM</button>
-            <button class="btn" onclick="finalize(false)" style="border-color: #ff003c; color: #ff003c;">INCORRECT</button>
+    <div id="lockout-screen">
+        <div class="lockout-text">ALBEDO OVERLOAD</div>
+        <div class="lockout-sub">ENVIRONMENTAL LUX EXCEEDS THRESHOLD. SEEK SHADE.</div>
+    </div>
+
+    <div id="ui-layer" style="opacity: 0;">
+        <div class="header panel">
+            <div class="sys-title">OVERLORD v19.0_APEX</div>
+            <div class="sys-clock" id="sys-clock">00:00:00:000</div>
+        </div>
+
+        <div class="left-col">
+            <div class="panel">
+                <div class="data-block">
+                    <div class="data-label">UPLINK STATUS</div>
+                    <div class="data-value" id="uplink-stat">AWAITING HANDSHAKE</div>
+                </div>
+                <div class="data-block">
+                    <div class="data-label">ENVIRONMENTAL ALBEDO / LUX</div>
+                    <div class="data-value" id="lux-val">0.00%</div>
+                    <div class="progress-container"><div class="progress-bar" id="lux-bar"></div><div class="progress-markers"></div></div>
+                </div>
+                <div class="data-block">
+                    <div class="data-label">SPECTRUM SIGNATURE</div>
+                    <div class="data-value" id="spectrum-val">SCANNING...</div>
+                </div>
+                <div class="data-block">
+                    <div class="data-label">PHOTON VARIANCE RATIO</div>
+                    <div class="data-value" id="variance-val">0.00</div>
+                </div>
+            </div>
+            
+            <div class="panel" style="flex-grow: 1;">
+                <div class="data-label">TERMINAL / DIAGNOSTICS</div>
+                <div id="terminal-out"></div>
+            </div>
+        </div>
+
+        <div class="right-col">
+            <div class="panel" style="padding: 0;">
+                <video id="raw-video" autoplay playsinline muted></video>
+                <div style="padding: 10px;">
+                    <div class="data-label">RAW OPTICAL FEED // IR FILTERED</div>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <div class="data-block">
+                    <div class="data-label">BIOMETRIC TARGET</div>
+                    <div class="data-value" id="target-stat">UNLOCKED</div>
+                </div>
+                <div class="data-block">
+                    <div class="data-label">FACIAL MESH NODES</div>
+                    <div class="data-value" id="node-count">0 / 478</div>
+                </div>
+                <div class="data-block">
+                    <div class="data-label">FPS CALCULATION</div>
+                    <div class="data-value" id="fps-val">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-row">
+            <div class="panel" style="flex: 1;">
+                <div class="data-label">SPATIAL TELEMETRY (PITCH / YAW / ROLL)</div>
+                <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+                    <div><span class="data-label">X: </span><span class="data-value" id="tel-x">0.00°</span></div>
+                    <div><span class="data-label">Y: </span><span class="data-value" id="tel-y">0.00°</span></div>
+                    <div><span class="data-label">Z: </span><span class="data-value" id="tel-z">0.00°</span></div>
+                </div>
+            </div>
+            <div class="panel" style="flex: 1;">
+                <div class="data-label">OCULAR & MANDIBLE STATE</div>
+                <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+                    <div><span class="data-label">L_EYE EAR: </span><span class="data-value" id="eye-l">0.00</span></div>
+                    <div><span class="data-label">R_EYE EAR: </span><span class="data-value" id="eye-r">0.00</span></div>
+                    <div><span class="data-label">MANDIBLE: </span><span class="data-value" id="mouth-state">IDLE</span></div>
+                </div>
+            </div>
+            <div class="panel" style="flex: 1;">
+                <div class="data-label">ALBEDO WAVEFORM</div>
+                <canvas id="lux-canvas"></canvas>
+            </div>
         </div>
     </div>
 
     <script>
-        // --- 1. GPU SHADER ENGINE ---
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 1, 3000);
-        camera.position.z = 900;
-        const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('webgl-canvas'), antialias: true, alpha: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-
-        // Grid Floor
-        const grid = new THREE.GridHelper(4000, 50, 0x002244, 0x00050b);
-        grid.position.y = -500;
-        scene.add(grid);
-
-        // --- THE MASTER THERMAL RASTER MATERIAL ---
-        const thermalUniforms = { time: { value: 0 }, thermalActive: { value: 1.0 } };
-        const thermalMaterial = new THREE.ShaderMaterial({
-            uniforms: thermalUniforms,
-            vertexShader: `
-                varying float vZ;
-                void main() {
-                    vZ = position.z;
-                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-                }
-            `,
-            fragmentShader: `
-                varying float vZ;
-                uniform float thermalActive;
-                void main() {
-                    // Calculate Heat based on Z-depth (the physical surface of your face)
-                    float heat = clamp((vZ + 60.0) / 120.0, 0.0, 1.0);
-                    
-                    if (thermalActive > 0.5) {
-                        // IRONBOW GRADIENT: Deep Blue -> Purple -> Red -> Yellow -> White
-                        vec3 color = vec3(0.0);
-                        if(heat < 0.2) color = mix(vec3(0,0,0.3), vec3(0.4,0,0.5), heat*5.0);
-                        else if(heat < 0.4) color = mix(vec3(0.4,0,0.5), vec3(1,0,0), (heat-0.2)*5.0);
-                        else if(heat < 0.7) color = mix(vec3(1,0,0), vec3(1,0.6,0), (heat-0.4)*3.33);
-                        else color = mix(vec3(1,0.6,0), vec3(1,1,1), (heat-0.7)*3.33);
-                        gl_FragColor = vec4(color, 0.95);
-                    } else {
-                        // Skin Color Detector Mode (Action Green Mesh)
-                        gl_FragColor = vec4(0.41, 0.75, 0.16, 0.8);
-                    }
-                }
-            `,
-            side: THREE.DoubleSide, transparent: true
-        });
-
-        // Neural Mesh Architecture
-        const faceGeo = new THREE.BufferGeometry();
-        const positions = new Float32Array(478 * 3);
-        faceGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        
-        // Detailed Index Mapping to create a solid surface mesh
-        const indices = [];
-        for(let i=0; i<440; i++) {
-            indices.push(i, i+1, i+33);
-            indices.push(i+1, i+34, i+33);
-        }
-        faceGeo.setIndex(indices);
-        
-        const faceMesh = new THREE.Mesh(faceGeo, thermalMaterial);
-        scene.add(faceMesh);
-
-        // --- 2. LOGIC & HARDWARE ---
-        let locked = false;
-        let rainbow = false;
-        const video = document.getElementById('video-feed');
-        const sampler = document.createElement('canvas');
-
-        document.getElementById('thermal-switch').onchange = (e) => {
-            thermalUniforms.thermalActive.value = e.target.checked ? 1.0 : 0.0;
-            faceMesh.material.wireframe = !e.target.checked;
+        // --- ARCHITECTURE GLOBALS ---
+        const sys = {
+            booted: false, active: false, overexposed: false,
+            frame: 0, lastTime: performance.now(), fps: 0,
+            luxHistory: new Array(100).fill(0),
+            audioCtx: null, osc: null, gainNode: null,
+            dom: {
+                boot: document.getElementById('boot-sequence'),
+                bootLog: document.getElementById('boot-log'),
+                ui: document.getElementById('ui-layer'),
+                lockout: document.getElementById('lockout-screen'),
+                term: document.getElementById('terminal-out'),
+                clock: document.getElementById('sys-clock'),
+                luxCanvas: document.getElementById('lux-canvas'),
+                rawVideo: document.getElementById('raw-video'),
+                feed: document.getElementById('cam-feed'),
+                buffer: document.getElementById('analysis-buffer'),
+                
+                // UI Readouts
+                uStat: document.getElementById('uplink-stat'),
+                lVal: document.getElementById('lux-val'),
+                lBar: document.getElementById('lux-bar'),
+                sVal: document.getElementById('spectrum-val'),
+                vVal: document.getElementById('variance-val'),
+                tStat: document.getElementById('target-stat'),
+                nCount: document.getElementById('node-count'),
+                fpsVal: document.getElementById('fps-val'),
+                telX: document.getElementById('tel-x'),
+                telY: document.getElementById('tel-y'),
+                telZ: document.getElementById('tel-z'),
+                eyeL: document.getElementById('eye-l'),
+                eyeR: document.getElementById('eye-r'),
+                mouth: document.getElementById('mouth-state')
+            }
         };
 
-        function finalize(success) {
-            document.getElementById('modal').style.display = 'none';
-            if (success) {
-                rainbow = true;
-                document.getElementById('rainbow-strobe').style.opacity = '0.4';
-                document.getElementById('p-val').innerText = document.getElementById('final-res').innerText;
-                setTimeout(() => {
-                    rainbow = false;
-                    document.getElementById('rainbow-strobe').style.opacity = '0';
-                }, 5000);
-            } else {
-                locked = true; // Error lockout
-                setTimeout(() => { locked = false; }, 5000);
-            }
+        const ctx2d = sys.dom.buffer.getContext('2d', { willReadFrequently: true });
+        const waveCtx = sys.dom.luxCanvas.getContext('2d');
+
+        // --- UTILITY: LOGGER ---
+        function logMsg(msg, isError = false) {
+            const time = new Date().toISOString().split('T')[1].slice(0, -1);
+            const line = document.createElement('div');
+            line.innerHTML = `<span style="color:#555">[${time}]</span> <span style="color:${isError?'#ff003c':'#00f2ff'}">${msg}</span>`;
+            sys.dom.term.appendChild(line);
+            if (sys.dom.term.childNodes.length > 20) sys.dom.term.removeChild(sys.dom.term.firstChild);
+            sys.dom.term.scrollTop = sys.dom.term.scrollHeight;
         }
 
-        // --- 3. AI PIPELINE ---
+        // --- AUDIO ENGINE ---
+        function initAudio() {
+            sys.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            sys.osc = sys.audioCtx.createOscillator();
+            sys.gainNode = sys.audioCtx.createGain();
+            sys.osc.type = 'sine';
+            sys.osc.frequency.setValueAtTime(55, sys.audioCtx.currentTime); // Low hum
+            sys.gainNode.gain.setValueAtTime(0.05, sys.audioCtx.currentTime);
+            sys.osc.connect(sys.gainNode);
+            sys.gainNode.connect(sys.audioCtx.destination);
+            sys.osc.start();
+        }
+
+        function beep(freq = 880, dur = 0.1) {
+            if (!sys.audioCtx) return;
+            const osc = sys.audioCtx.createOscillator();
+            const gain = sys.audioCtx.createGain();
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(freq, sys.audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.02, sys.audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, sys.audioCtx.currentTime + dur);
+            osc.connect(gain);
+            gain.connect(sys.audioCtx.destination);
+            osc.start();
+            osc.stop(sys.audioCtx.currentTime + dur);
+        }
+
+        // --- BOOT SEQUENCE ---
+        async function initOS() {
+            if (sys.booted) return;
+            sys.booted = true;
+            initAudio();
+            document.documentElement.requestFullscreen().catch(e=>console.log("FS bypass"));
+            
+            const logs = [
+                "INITIATING KERNEL... OK",
+                "LOADING MODULES: [WEBGL, MEDIAPIPE, NEURAL_NET]... OK",
+                "MOUNTING VIRTUAL FILE SYSTEMS... OK",
+                "ESTABLISHING CAMERA UPLINK...",
+                "BYPASSING SECURITY PROTOCOLS... [WARNING: ILLEGAL OPERATION]",
+                "INJECTING OVERLORD PAYLOAD...",
+                "COMPILING SHADERS...",
+                "CALIBRATING ALBEDO SENSORS...",
+                "SYSTEM READY."
+            ];
+
+            sys.dom.boot.innerHTML = '';
+            for (let i = 0; i < logs.length; i++) {
+                const el = document.createElement('div');
+                el.innerText = logs[i];
+                sys.dom.boot.appendChild(el);
+                beep(440 + (i*50), 0.05);
+                await new Promise(r => setTimeout(r, Math.random() * 300 + 100));
+            }
+
+            sys.dom.boot.style.display = 'none';
+            sys.dom.ui.style.opacity = '1';
+            sys.active = true;
+            logMsg("SYSTEM ONLINE. AWAITING TARGET.");
+            startCamera();
+        }
+
+        // --- THREE.JS GRAPHICS ENGINE ---
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x000205, 0.001);
+        
+        const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 5000);
+        camera.position.z = 1000;
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('webgl-container').appendChild(renderer.domElement);
+
+        // Post-Processing
+        const composer = new THREE.EffectComposer(renderer);
+        const renderPass = new THREE.RenderPass(scene, camera);
+        composer.addPass(renderPass);
+        
+        const bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
+        bloomPass.threshold = 0.2;
+        bloomPass.strength = 2.0;
+        bloomPass.radius = 0.5;
+        composer.addPass(bloomPass);
+
+        // Scene Objects
+        const bgGrid = new THREE.GridHelper(10000, 200, 0x002244, 0x000a14);
+        bgGrid.position.y = -600;
+        bgGrid.position.z = -1000;
+        scene.add(bgGrid);
+
+        const pointGeo = new THREE.BufferGeometry();
+        const positions = new Float32Array(478 * 3);
+        const colors = new Float32Array(478 * 3);
+        pointGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        pointGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+        const pointMat = new THREE.PointsMaterial({
+            size: 4, vertexColors: true, transparent: true, opacity: 0.8,
+            blending: THREE.AdditiveBlending, sizeAttenuation: true
+        });
+        const pointCloud = new THREE.Points(pointGeo, pointMat);
+        scene.add(pointCloud);
+
+        // Connections (Wireframe)
+        const lineMat = new THREE.LineBasicMaterial({ color: 0x00f2ff, transparent: true, opacity: 0.15, blending: THREE.AdditiveBlending });
+        const lineGeo = new THREE.BufferGeometry();
+        const lineIndices = [];
+        // Approximate delaunay triangulation pattern for aesthetics
+        for(let i=0; i<470; i+=2) { lineIndices.push(i, i+1, i+2); }
+        lineGeo.setIndex(lineIndices);
+        lineGeo.setAttribute('position', pointGeo.getAttribute('position'));
+        const lineMesh = new THREE.LineSegments(lineGeo, lineMat);
+        scene.add(lineMesh);
+
+        // Dynamic Orbits
+        const orbitGroup = new THREE.Group();
+        for(let i=0; i<3; i++) {
+            const ringGeo = new THREE.RingGeometry(600 + (i*100), 602 + (i*100), 64);
+            const ringMat = new THREE.MeshBasicMaterial({ color: 0x00f2ff, transparent: true, opacity: 0.1, side: THREE.DoubleSide, wireframe: true });
+            const ring = new THREE.Mesh(ringGeo, ringMat);
+            ring.rotation.x = Math.random() * Math.PI;
+            ring.rotation.y = Math.random() * Math.PI;
+            orbitGroup.add(ring);
+        }
+        scene.add(orbitGroup);
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // --- CORE LOGIC: ALBEDO / LUMINANCE ANALYSIS ---
+        function processEnvironment() {
+            if (sys.dom.feed.readyState !== 4) return;
+            
+            sys.dom.buffer.width = 128; sys.dom.buffer.height = 128;
+            ctx2d.drawImage(sys.dom.feed, 0, 0, 128, 128);
+            const data = ctx2d.getImageData(0, 0, 128, 128).data;
+            
+            let totalLum = 0, minLum = 255, maxLum = 0;
+            for (let i = 0; i < data.length; i += 4) {
+                let r = data[i], g = data[i+1], b = data[i+2];
+                let lum = 0.2126 * r + 0.7152 * g + 0.0722 * b; // Photometric luminance
+                totalLum += lum;
+                if(lum < minLum) minLum = lum;
+                if(lum > maxLum) maxLum = lum;
+            }
+            
+            const avgLum = totalLum / (128 * 128);
+            const contrastVariance = maxLum - minLum;
+            const luxPercent = (avgLum / 255) * 100;
+            
+            sys.luxHistory.push(luxPercent);
+            sys.luxHistory.shift();
+
+            // UI Updates
+            sys.dom.lVal.innerText = `${luxPercent.toFixed(2)}%`;
+            sys.dom.lBar.style.width = `${luxPercent}%`;
+            sys.dom.vVal.innerText = contrastVariance.toFixed(1);
+
+            // Spectrum Classification Logic (Replacing unsafe race mapping)
+            let specStr = "OPTIMAL LOW-LIGHT";
+            sys.dom.sVal.className = "data-value";
+            
+            if (luxPercent < 15) { specStr = "DARK MATTER / IR REQUIRED"; sys.dom.sVal.className = "data-value warn"; }
+            else if (luxPercent > 40 && luxPercent < 70) { specStr = "HIGH ALBEDO SIGNATURE"; }
+            else if (luxPercent >= 70) { specStr = "CRITICAL PHOTON SATURATION"; sys.dom.sVal.className = "data-value danger"; }
+            
+            sys.dom.sVal.innerText = specStr;
+
+            // Overexposure Lockout Protocol
+            if (luxPercent >= 70) {
+                if (!sys.overexposed) {
+                    sys.overexposed = true;
+                    sys.dom.lockout.style.display = 'flex';
+                    sys.dom.lBar.style.background = 'var(--alert-red)';
+                    logMsg("ERR: SENSOR OVERLOAD. LOCKING BIOMETRICS.", true);
+                    beep(200, 0.5);
+                    bloomPass.strength = 5.0; // Blow out the visuals
+                }
+            } else {
+                if (sys.overexposed) {
+                    sys.overexposed = false;
+                    sys.dom.lockout.style.display = 'none';
+                    sys.dom.lBar.style.background = 'var(--core-cyan)';
+                    logMsg("LUMINANCE NORMALIZED. RESUMING SCAN.");
+                    bloomPass.strength = 2.0;
+                }
+            }
+
+            drawWaveform();
+        }
+
+        function drawWaveform() {
+            sys.dom.luxCanvas.width = sys.dom.luxCanvas.clientWidth;
+            sys.dom.luxCanvas.height = sys.dom.luxCanvas.clientHeight;
+            waveCtx.clearRect(0, 0, sys.dom.luxCanvas.width, sys.dom.luxCanvas.height);
+            
+            waveCtx.beginPath();
+            waveCtx.strokeStyle = sys.overexposed ? 'red' : '#00f2ff';
+            waveCtx.lineWidth = 2;
+            
+            const slice = sys.dom.luxCanvas.width / sys.luxHistory.length;
+            for(let i=0; i<sys.luxHistory.length; i++) {
+                const x = i * slice;
+                const y = sys.dom.luxCanvas.height - (sys.luxHistory[i] / 100 * sys.dom.luxCanvas.height);
+                if(i===0) waveCtx.moveTo(x, y);
+                else waveCtx.lineTo(x, y);
+            }
+            waveCtx.stroke();
+            
+            // Draw threshold line
+            waveCtx.beginPath();
+            waveCtx.strokeStyle = 'rgba(255,0,60,0.5)';
+            waveCtx.setLineDash([5, 5]);
+            waveCtx.moveTo(0, sys.dom.luxCanvas.height * 0.3); // 70% threshold visually
+            waveCtx.lineTo(sys.dom.luxCanvas.width, sys.dom.luxCanvas.height * 0.3);
+            waveCtx.stroke();
+            waveCtx.setLineDash([]);
+        }
+
+        // --- CORE LOGIC: BIOMETRIC AI ---
         const faceAI = new FaceMesh({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`});
-        faceAI.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.8, minTrackingConfidence: 0.8 });
+        faceAI.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.7, minTrackingConfidence: 0.7 });
 
         faceAI.onResults((res) => {
+            if (sys.overexposed) {
+                resetBiometrics();
+                return;
+            }
+
             if (res.multiFaceLandmarks && res.multiFaceLandmarks.length > 0) {
+                sys.dom.tStat.innerText = "LOCKED";
+                sys.dom.tStat.className = "data-value";
+                sys.dom.nCount.innerText = "478 / 478";
+                
                 const marks = res.multiFaceLandmarks[0];
-                const pos = faceGeo.attributes.position.array;
-                document.getElementById('status').innerText = "SYNC_LOCKED";
+                const pos = pointGeo.attributes.position.array;
+                const col = pointGeo.attributes.color.array;
+                const scaleX = window.innerWidth < 768 ? 600 : 1200;
+                const scaleY = scaleX;
+                const scaleZ = scaleX;
 
-                sampler.width = video.videoWidth; sampler.height = video.videoHeight;
-                const ctx = sampler.getContext('2d'); ctx.drawImage(video, 0, 0);
+                // Telemetry Calculation Math
+                const n = marks[1];   // Nose tip
+                const c = marks[152]; // Chin
+                const le = marks[33]; // Left eye outer
+                const re = marks[263];// Right eye outer
 
+                // Pitch, Yaw, Roll approx
+                const pitch = (((n.y - c.y) * -100) + 15).toFixed(2);
+                const yaw = ((re.z - le.z) * 100).toFixed(2);
+                const roll = ((re.y - le.y) * 100).toFixed(2);
+                
+                sys.dom.telX.innerText = `${pitch}°`;
+                sys.dom.telY.innerText = `${yaw}°`;
+                sys.dom.telZ.innerText = `${roll}°`;
+
+                // Eye Aspect Ratio (EAR) Math
+                const calcEAR = (p1, p2, p3, p4, p5, p6) => {
+                    const v1 = Math.hypot(marks[p2].x - marks[p6].x, marks[p2].y - marks[p6].y);
+                    const v2 = Math.hypot(marks[p3].x - marks[p5].x, marks[p3].y - marks[p5].y);
+                    const h = Math.hypot(marks[p1].x - marks[p4].x, marks[p1].y - marks[p4].y);
+                    return ((v1 + v2) / (2.0 * h)).toFixed(3);
+                };
+
+                const earL = calcEAR(33, 160, 158, 133, 153, 144);
+                const earR = calcEAR(362, 385, 387, 263, 373, 380);
+                sys.dom.eyeL.innerText = earL; sys.dom.eyeR.innerText = earR;
+
+                if (earL < 0.2 || earR < 0.2) { sys.dom.eyeL.className = "data-value warn"; } 
+                else { sys.dom.eyeL.className = "data-value"; }
+
+                // Mouth State Math
+                const mTop = marks[13]; const mBot = marks[14];
+                const mDist = Math.abs(mTop.y - mBot.y);
+                if (mDist > 0.02) { sys.dom.mouth.innerText = "VOCALIZING"; sys.dom.mouth.className = "data-value warn"; }
+                else { sys.dom.mouth.innerText = "IDLE"; sys.dom.mouth.className = "data-value"; }
+
+                // Map 3D Geometry
                 for (let i = 0; i < 478; i++) {
-                    pos[i*3] = (marks[i].x - 0.5) * -1400;
-                    pos[i*3+1] = (marks[i].y - 0.5) * -1400;
-                    pos[i*3+2] = marks[i].z * 1400;
-                }
-                faceGeo.attributes.position.needsUpdate = true;
+                    pos[i*3] = (marks[i].x - 0.5) * -scaleX;
+                    pos[i*3+1] = (marks[i].y - 0.5) * -scaleY + 100; // Offset Y slightly
+                    pos[i*3+2] = marks[i].z * scaleZ;
 
-                if (!locked && !rainbow) {
-                    const nose = ctx.getImageData(Math.floor(marks[1].x*sampler.width), Math.floor(marks[1].y*sampler.height), 1, 1).data;
-                    const l = (0.299*nose[0] + 0.587*nose[1] + 0.114*nose[2]) / 255;
-                    setTimeout(() => {
-                        if(!locked && !rainbow) {
-                            document.getElementById('final-res').innerText = l < 0.42 ? "BLACK" : "WHITE";
-                            document.getElementById('modal').style.display = 'block';
-                            locked = true;
-                        }
-                    }, 5000);
+                    // Dynamic Color Mapping based on facial region
+                    let r = 0, g = 0.95, b = 1.0; // Default cyan
+                    
+                    // Lips: Red shift
+                    if (i >= 0 && i <= 17 || i >= 61 && i <= 81) { r = 1.0; g = 0.0; b = 0.2; }
+                    // Eyes: Amber shift
+                    else if (i >= 133 && i <= 155 || i >= 362 && i <= 385) { r = 1.0; g = 0.6; b = 0.0; }
+                    
+                    // Flash mesh if vocalizing
+                    if(mDist > 0.03) { r=1; g=0; b=0; }
+
+                    col[i*3] = r; col[i*3+1] = g; col[i*3+2] = b;
                 }
+                
+                pointGeo.attributes.position.needsUpdate = true;
+                pointGeo.attributes.color.needsUpdate = true;
+                lineGeo.attributes.position.needsUpdate = true;
+                
+                // Track mesh to head rotation visually
+                pointCloud.rotation.y = (yaw / 100);
+                pointCloud.rotation.x = (pitch / 100);
+                lineMesh.rotation.y = (yaw / 100);
+                lineMesh.rotation.x = (pitch / 100);
+
+            } else {
+                resetBiometrics();
             }
         });
 
-        new Camera(video, { onFrame: async () => { await faceAI.send({image: video}); }, width: 1280, height: 720 }).start();
+        function resetBiometrics() {
+            sys.dom.tStat.innerText = "SEARCHING..."; sys.dom.tStat.className = "data-value warn";
+            sys.dom.nCount.innerText = "0 / 478";
+            sys.dom.telX.innerText = "--"; sys.dom.telY.innerText = "--"; sys.dom.telZ.innerText = "--";
+            sys.dom.eyeL.innerText = "--"; sys.dom.eyeR.innerText = "--"; sys.dom.mouth.innerText = "--";
+            
+            const pos = pointGeo.attributes.position.array;
+            for(let i=0; i<pos.length; i++) { pos[i] *= 0.9; } // Shrink to center
+            pointGeo.attributes.position.needsUpdate = true;
+            lineGeo.attributes.position.needsUpdate = true;
+        }
+
+        // --- CAMERA INITIALIZATION ---
+        function startCamera() {
+            const cam = new Camera(sys.dom.feed, {
+                onFrame: async () => {
+                    if(!sys.active) return;
+                    processEnvironment();
+                    await faceAI.send({image: sys.dom.feed});
+                },
+                width: 640, height: 480, facingMode: 'user'
+            });
+            
+            cam.start().then(() => {
+                logMsg("UPLINK SECURED. FEED STREAMING.");
+                sys.dom.uStat.innerText = "CONNECTED";
+                sys.dom.uStat.className = "data-value";
+                sys.dom.rawVideo.srcObject = sys.dom.feed.srcObject;
+            }).catch(err => {
+                logMsg("FATAL: HARDWARE ACCESS DENIED.", true);
+                sys.dom.uStat.innerText = "OFFLINE";
+                sys.dom.uStat.className = "data-value danger";
+            });
+        }
+
+        // --- MAIN RENDER LOOP ---
+        function updateClock() {
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            const s = String(now.getSeconds()).padStart(2, '0');
+            const ms = String(now.getMilliseconds()).padStart(3, '0');
+            sys.dom.clock.innerText = `${h}:${m}:${s}:${ms}`;
+        }
 
         function animate() {
             requestAnimationFrame(animate);
-            if (rainbow) document.getElementById('rainbow-strobe').style.backgroundColor = `hsl(${Date.now() % 360}, 100%, 50%)`;
-            renderer.render(scene, camera);
+            if (!sys.active) return;
+
+            // Frame calculation
+            sys.frame++;
+            const now = performance.now();
+            if (now - sys.lastTime >= 1000) {
+                sys.fps = sys.frame;
+                sys.dom.fpsVal.innerText = sys.fps;
+                if(sys.fps < 20) sys.dom.fpsVal.className = "data-value danger";
+                else if(sys.fps < 40) sys.dom.fpsVal.className = "data-value warn";
+                else sys.dom.fpsVal.className = "data-value";
+                sys.frame = 0;
+                sys.lastTime = now;
+            }
+
+            updateClock();
+
+            // Environmental Animation
+            bgGrid.position.z += 2;
+            if (bgGrid.position.z > 0) bgGrid.position.z = -1000;
+            
+            orbitGroup.children.forEach((ring, index) => {
+                ring.rotation.x += 0.005 * (index + 1);
+                ring.rotation.y += 0.002 * (index + 1);
+            });
+
+            // Random Terminal Data Injection
+            if (Math.random() < 0.02) {
+                const hex = Math.floor(Math.random() * 0xffffff).toString(16).toUpperCase();
+                logMsg(`PACKET RX: 0x${hex} // ${Math.random().toFixed(4)}`);
+            }
+
+            // Post-processing render
+            composer.render();
         }
-        animate();
+
+        // Init loops
+        requestAnimationFrame(animate);
+        setInterval(updateClock, 50);
+
     </script>
 </body>
 </html>
