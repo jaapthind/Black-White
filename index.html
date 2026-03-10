@@ -2,695 +2,1189 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>OVERLORD OS // V19.0.0-BETA // APEX RASTER</title>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
-    
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoSort: Advanced Circular Economy Simulator</title>
     <style>
+        /* ==========================================================================
+           GLOBAL VARIABLES & RESET
+           ========================================================================== */
         :root {
-            --bg-base: #000000;
-            --core-cyan: #00f2ff;
-            --core-cyan-dim: rgba(0, 242, 255, 0.2);
-            --alert-red: #ff003c;
-            --warn-amber: #ffaa00;
-            --safe-green: #39ff14;
-            --ui-bg: rgba(2, 6, 12, 0.7);
-            --ui-border: rgba(0, 242, 255, 0.3);
-            --font-main: 'Consolas', 'Courier New', monospace;
+            --primary-bg: #0f172a;
+            --panel-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-green: #10b981;
+            --accent-blue: #3b82f6;
+            --accent-red: #ef4444;
+            
+            /* Realistic Bin Colors */
+            --bin-compost-main: #15803d;
+            --bin-compost-dark: #14532d;
+            --bin-compost-lip: #16a34a;
+            
+            --bin-recycle-main: #1d4ed8;
+            --bin-recycle-dark: #1e3a8a;
+            --bin-recycle-lip: #2563eb;
+            
+            --bin-landfill-main: #334155;
+            --bin-landfill-dark: #0f172a;
+            --bin-landfill-lip: #475569;
+
+            --font-main: 'Segoe UI', system-ui, -apple-system, sans-serif;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
-        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
         body {
-            background-color: var(--bg-base);
-            color: var(--core-cyan);
             font-family: var(--font-main);
-            overflow: hidden;
-            width: 100vw;
+            background-color: var(--primary-bg);
+            color: var(--text-main);
             height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
-        /* CRT SCANLINES & VIGNETTE */
-        body::before {
-            content: " ";
-            display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            z-index: 999; background-size: 100% 2px, 3px 100%; pointer-events: none;
-        }
-        body::after {
-            content: ""; position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: radial-gradient(circle, rgba(0,0,0,0) 60%, rgba(0,0,0,0.8) 100%);
-            z-index: 1000; pointer-events: none;
-        }
-
-        #webgl-container { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; }
+        /* ==========================================================================
+           TYPOGRAPHY & UTILITIES
+           ========================================================================== */
+        h1, h2, h3 { font-weight: 800; letter-spacing: -0.025em; }
+        p { line-height: 1.7; font-size: 1.1rem; margin-bottom: 1.5rem; color: #cbd5e1; user-select: text; }
+        strong { color: #fff; }
         
-        /* HARDWARE ACCELERATED UI LAYER */
-        #ui-layer {
-            position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
-            z-index: 10; display: grid;
-            grid-template-columns: 350px 1fr 350px;
-            grid-template-rows: 80px 1fr 200px;
-            padding: 20px; gap: 20px; pointer-events: none;
+        .hidden { display: none !important; }
+        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        .slide-up { animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
-        .panel {
-            background: var(--ui-bg); border: 1px solid var(--ui-border);
-            backdrop-filter: blur(8px); padding: 15px;
-            box-shadow: inset 0 0 20px rgba(0, 242, 255, 0.05), 0 5px 15px rgba(0,0,0,0.8);
-            position: relative; overflow: hidden;
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        .panel::before {
-            content: ''; position: absolute; top: 0; left: 0; width: 10px; height: 10px;
-            border-top: 2px solid var(--core-cyan); border-left: 2px solid var(--core-cyan);
+        /* ==========================================================================
+           SCREENS (Intro, Edu, Game, End)
+           ========================================================================== */
+        .screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: var(--primary-bg);
+            z-index: 10;
+            transition: opacity 0.5s;
         }
-        .panel::after {
-            content: ''; position: absolute; bottom: 0; right: 0; width: 10px; height: 10px;
-            border-bottom: 2px solid var(--core-cyan); border-right: 2px solid var(--core-cyan);
+
+        .scrollable-content {
+            width: 90%;
+            max-width: 1000px;
+            height: 85vh;
+            overflow-y: auto;
+            background: var(--panel-bg);
+            border-radius: 24px;
+            padding: 50px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 1px solid #334155;
         }
 
-        .header { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--core-cyan-dim); padding-bottom: 10px; }
-        .sys-title { font-size: 24px; font-weight: 900; letter-spacing: 8px; text-shadow: 0 0 10px var(--core-cyan); animation: glitch 4s infinite; }
-        .sys-clock { font-size: 14px; letter-spacing: 2px; }
+        .scrollable-content::-webkit-scrollbar { width: 12px; }
+        .scrollable-content::-webkit-scrollbar-track { background: #0f172a; border-radius: 8px; }
+        .scrollable-content::-webkit-scrollbar-thumb { background: #475569; border-radius: 8px; }
 
-        .left-col { grid-column: 1 / 2; grid-row: 2 / 3; display: flex; flex-direction: column; gap: 15px; }
-        .right-col { grid-column: 3 / 4; grid-row: 2 / 3; display: flex; flex-direction: column; gap: 15px; }
-        .bottom-row { grid-column: 1 / -1; grid-row: 3 / 4; display: flex; gap: 15px; }
-
-        .data-block { margin-bottom: 15px; }
-        .data-label { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 4px; }
-        .data-value { font-size: 18px; font-weight: bold; letter-spacing: 1px; color: var(--safe-green); text-shadow: 0 0 8px var(--safe-green); }
-        .data-value.warn { color: var(--warn-amber); text-shadow: 0 0 8px var(--warn-amber); }
-        .data-value.danger { color: var(--alert-red); text-shadow: 0 0 8px var(--alert-red); animation: flash 0.5s infinite; }
-
-        .progress-container { width: 100%; height: 6px; background: #111; border: 1px solid #333; margin-top: 5px; position: relative; }
-        .progress-bar { height: 100%; background: var(--core-cyan); width: 0%; transition: width 0.1s linear; box-shadow: 0 0 10px var(--core-cyan); }
-        .progress-markers { position: absolute; top: -2px; left: 70%; width: 2px; height: 10px; background: var(--alert-red); }
-
-        #raw-video { width: 100%; height: auto; border: 1px solid var(--ui-border); filter: grayscale(100%) contrast(1.5) brightness(0.8); transform: scaleX(-1); }
-        #lux-canvas { width: 100%; height: 60px; background: #000; border: 1px solid var(--ui-border); margin-top: 10px; }
-        #terminal-out { font-size: 9px; color: #aaa; line-height: 1.2; height: 150px; overflow-y: hidden; word-wrap: break-word; }
-
-        /* OVERLAYS */
-        #boot-sequence {
-            position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 5000;
-            display: flex; flex-direction: column; justify-content: center; align-items: flex-start; padding: 50px;
-            font-size: 14px; color: var(--core-cyan);
+        /* ==========================================================================
+           EDUCATIONAL SECTIONS (Problem & Solution)
+           ========================================================================== */
+        .edu-header {
+            text-align: center;
+            margin-bottom: 40px;
         }
+
+        .edu-header h1 {
+            font-size: 3.5rem;
+            background: linear-gradient(to right, #34d399, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .edu-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .edu-card {
+            background: #0f172a;
+            padding: 30px;
+            border-radius: 16px;
+            border-left: 6px solid;
+            box-shadow: inset 0 2px 4px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .card-problem { border-left-color: var(--accent-red); }
+        .card-solution { border-left-color: var(--accent-green); }
         
-        #lockout-screen {
-            position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(20, 0, 0, 0.9); z-index: 4000;
-            display: none; flex-direction: column; justify-content: center; align-items: center; border: 20px solid var(--alert-red);
+        .edu-card h3 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
-        .lockout-text { font-size: 5rem; font-weight: 900; color: var(--alert-red); text-shadow: 0 0 40px var(--alert-red); letter-spacing: 15px; margin-bottom: 20px; }
-        .lockout-sub { font-size: 1.5rem; color: #fff; letter-spacing: 5px; background: var(--alert-red); padding: 5px 20px; }
 
-        @keyframes glitch {
-            0% { transform: translate(0) }
-            20% { transform: translate(-2px, 1px) }
-            40% { transform: translate(-1px, -1px) }
-            60% { transform: translate(2px, 1px) }
-            80% { transform: translate(1px, -1px) }
-            100% { transform: translate(0) }
+        .data-stat {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--accent-red);
+            display: block;
+            margin-bottom: 10px;
         }
-        @keyframes flash { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-        /* RESPONSIVE FLUIDITY */
-        @media (max-width: 1024px) {
-            #ui-layer { grid-template-columns: 250px 1fr 250px; }
+        /* ==========================================================================
+           BUTTONS
+           ========================================================================== */
+        .btn-primary {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            padding: 18px 40px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: block;
+            margin: 40px auto 0 auto;
         }
-        @media (max-width: 768px) {
-            #ui-layer { display: flex; flex-direction: column; overflow-y: auto; pointer-events: auto; }
-            .panel { margin-bottom: 10px; }
-            .bottom-row { flex-direction: column; }
-            #boot-sequence { padding: 20px; font-size: 10px; }
-            .lockout-text { font-size: 2.5rem; }
+
+        .btn-primary:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 20px 25px -5px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(1px);
+        }
+
+        /* ==========================================================================
+           GAME UI
+           ========================================================================== */
+        #game-ui {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+            position: relative;
+            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+        }
+
+        /* Heads Up Display */
+        .hud {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 20px 40px;
+            z-index: 20;
+        }
+
+        .score-box {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 15px 30px;
+            border-radius: 16px;
+            text-align: center;
+        }
+
+        .score-label {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+        }
+
+        .score-value {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--text-main);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .streak-container {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+        }
+
+        #streak-multiplier {
+            font-size: 3rem;
+            font-weight: 900;
+            color: #fbbf24;
+            text-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
+            transition: transform 0.1s;
+        }
+
+        .streak-pop {
+            animation: streakPop 0.3s ease-out;
+        }
+
+        @keyframes streakPop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.5); color: #fff; }
+            100% { transform: scale(1); }
+        }
+
+        /* ==========================================================================
+           THE WASTE ITEM (Draggable/Throwable)
+           ========================================================================== */
+        #spawn-area {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            z-index: 15;
+        }
+
+        .waste-item-container {
+            position: absolute;
+            cursor: grab;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            touch-action: none; /* For mobile dragging */
+            transition: transform 0.1s;
+        }
+
+        .waste-item-container:active {
+            cursor: grabbing;
+        }
+
+        .waste-visual {
+            width: 120px;
+            height: 120px;
+            background: #fff;
+            border-radius: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 4rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3), inset 0 -5px 15px rgba(0,0,0,0.1);
+            border: 4px solid #cbd5e1;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .waste-label {
+            background: rgba(15, 23, 42, 0.9);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            text-align: center;
+            max-width: 250px;
+            pointer-events: none;
+        }
+
+        /* Item Animations */
+        @keyframes spawnItem {
+            0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+            70% { transform: scale(1.2) rotate(10deg); opacity: 1; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        .anim-spawn {
+            animation: spawnItem 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* ==========================================================================
+           REALISTIC 3D BINS
+           ========================================================================== */
+        #bins-area {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 4vw;
+            padding-bottom: 5vh;
+            height: 40vh;
+            z-index: 10;
+        }
+
+        .bin-wrapper {
+            position: relative;
+            width: 220px;
+            height: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .bin-lid-back {
+            position: absolute;
+            top: -20px;
+            width: 200px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.3);
+            z-index: 1;
+        }
+
+        .bin {
+            position: absolute;
+            bottom: 0;
+            width: 220px;
+            height: 280px;
+            border-radius: 10px 10px 20px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 
+                inset -15px 0 30px rgba(0,0,0,0.4),
+                inset 10px 0 20px rgba(255,255,255,0.2),
+                0 20px 30px rgba(0,0,0,0.5);
+            z-index: 3;
+            transition: transform 0.2s;
+            /* Corrugation effect */
+            background-image: repeating-linear-gradient(
+                90deg,
+                transparent,
+                transparent 20px,
+                rgba(0,0,0,0.1) 20px,
+                rgba(0,0,0,0.1) 22px
+            );
+        }
+
+        .bin-lip {
+            position: absolute;
+            top: 0;
+            width: 240px;
+            height: 30px;
+            border-radius: 15px;
+            z-index: 4;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.3), inset 0 2px 5px rgba(255,255,255,0.3);
+        }
+
+        .bin-opening {
+            position: absolute;
+            top: -10px;
+            width: 200px;
+            height: 30px;
+            border-radius: 50%;
+            background: #000;
+            z-index: 2;
+            opacity: 0.8;
+            box-shadow: inset 0 5px 15px rgba(0,0,0,0.8);
+        }
+
+        /* Bin Specific Colors */
+        #bin-compost .bin { background-color: var(--bin-compost-main); }
+        #bin-compost .bin-lip { background-color: var(--bin-compost-lip); }
+        
+        #bin-recycle .bin { background-color: var(--bin-recycle-main); }
+        #bin-recycle .bin-lip { background-color: var(--bin-recycle-lip); }
+        
+        #bin-landfill .bin { background-color: var(--bin-landfill-main); }
+        #bin-landfill .bin-lip { background-color: var(--bin-landfill-lip); }
+
+        /* Bin Logos */
+        .bin-logo {
+            width: 100px;
+            height: 100px;
+            opacity: 0.8;
+            margin-top: 40px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+
+        .bin-label {
+            margin-top: auto;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        /* Hover / Target states */
+        .bin-wrapper.drag-over .bin {
+            transform: scale(1.05);
+            filter: brightness(1.2);
+        }
+
+        /* ==========================================================================
+           FEEDBACK MODAL
+           ========================================================================== */
+        #feedback-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        #feedback-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .feedback-card {
+            background: var(--panel-bg);
+            width: 90%;
+            max-width: 600px;
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            border: 2px solid #334155;
+            transform: scale(0.8);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        #feedback-overlay.active .feedback-card {
+            transform: scale(1);
+        }
+
+        .feedback-icon {
+            font-size: 5rem;
+            margin-bottom: 20px;
+        }
+
+        .feedback-title {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            font-weight: 900;
+        }
+
+        .feedback-title.correct { color: var(--accent-green); }
+        .feedback-title.incorrect { color: var(--accent-red); }
+
+        .feedback-item-name {
+            font-size: 1.5rem;
+            color: #fff;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #334155;
+        }
+
+        .feedback-explanation {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            color: #cbd5e1;
+            margin-bottom: 30px;
+            text-align: left;
+            background: #0f172a;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid var(--accent-blue);
+        }
+
+        .btn-continue {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .btn-continue:hover { background: #2563eb; }
+
+        /* ==========================================================================
+           PARTICLE CANVAS
+           ========================================================================== */
+        #particle-canvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 50;
         }
     </style>
 </head>
 <body>
 
-    <video id="cam-feed" autoplay playsinline style="display: none;"></video>
-    <canvas id="analysis-buffer" style="display: none;"></canvas>
+    <canvas id="particle-canvas"></canvas>
 
-    <div id="webgl-container"></div>
+    <div id="screen-intro" class="screen">
+        <div class="scrollable-content slide-up">
+            <div class="edu-header">
+                <h1>The Climate Reality & The Circular Economy</h1>
+                <p style="font-size: 1.3rem; max-width: 800px; margin: 0 auto;">
+                    Waste is not just a litter problem; it is a profound climate change problem. Understanding the lifecycle of materials is crucial for taking immediate, localized climate action.
+                </p>
+            </div>
 
-    <div id="boot-sequence" onclick="initOS()">
-        <div style="font-size: 2rem; margin-bottom: 20px; animation: flash 1s infinite;">[ CLICK TO INITIALIZE KERNEL ]</div>
-        <div id="boot-log"></div>
+            <div class="edu-grid">
+                <div class="edu-card card-problem">
+                    <h3>⚠️ The Linear Economy Crisis</h3>
+                    <p>
+                        For decades, society has operated on a <strong>"Take-Make-Dispose"</strong> model. We extract raw, virgin materials from the Earth (taking), manufacture them into products using fossil fuels (making), and quickly throw them away (disposing).
+                    </p>
+                    <span class="data-stat">25x</span>
+                    <p>
+                        <strong>The Methane Threat:</strong> When organic materials like food scraps and paper decompose in a landfill, they are buried under tons of garbage without access to oxygen. This anaerobic decomposition produces <strong>Methane (CH₄)</strong>, a greenhouse gas that is roughly 25 to 80 times more potent at trapping heat in the atmosphere than Carbon Dioxide (CO₂) over a 20-year period.
+                    </p>
+                    <p>
+                        <strong>Resource Depletion & Scope Emissions:</strong> Throwing away a plastic bottle doesn't just fill a hole in the ground; it means a completely new bottle must be created. This requires extracting more petroleum, transporting it, refining it, and manufacturing it—emitting massive amounts of CO₂ at every step (Scope 3 emissions).
+                    </p>
+                </div>
+
+                <div class="edu-card card-solution">
+                    <h3>💡 The Circular Solution</h3>
+                    <p>
+                        We must shift to a <strong>Circular Economy</strong>, where materials never become waste, and nature is regenerated. Proper sorting at the bin is the frontline of this transition.
+                    </p>
+                    <span class="data-stat">100%</span>
+                    <p>
+                        <strong>Composting as Carbon Sequestration:</strong> By sorting organic waste into the compost bin, materials decompose aerobically (with oxygen). This prevents methane generation entirely. The resulting compost is a nutrient-rich soil amendment that actually helps agricultural land <strong>draw down carbon</strong> from the atmosphere!
+                    </p>
+                    <p>
+                        <strong>Recycling Economics:</strong> Recycling an aluminum can saves 95% of the energy required to make a new one from raw bauxite ore. Paper can be recycled 5 to 7 times. Clean plastics can become clothing or new containers. 
+                    </p>
+                    <p>
+                        <em>Your mission today is to master the sorting rules. Over 100 items await your decision. Drag and drop them into the correct bins. Build your streak, maximize diversion, and save the climate.</em>
+                    </p>
+                </div>
+            </div>
+
+            <button class="btn-primary" onclick="GameController.start()">Initialize Sorting Simulator</button>
+        </div>
     </div>
 
-    <div id="lockout-screen">
-        <div class="lockout-text">ALBEDO OVERLOAD</div>
-        <div class="lockout-sub">ENVIRONMENTAL LUX EXCEEDS THRESHOLD. SEEK SHADE.</div>
+    <div id="screen-game" class="screen hidden">
+        <div id="game-ui">
+            
+            <div class="hud">
+                <div class="score-box">
+                    <div class="score-label">Items Diverted</div>
+                    <div class="score-value" id="ui-items">0 / 20</div>
+                </div>
+                
+                <div class="streak-container">
+                    <div class="score-label">Current Streak</div>
+                    <div id="streak-multiplier">x1</div>
+                </div>
+
+                <div class="score-box">
+                    <div class="score-label">Eco-Score</div>
+                    <div class="score-value" id="ui-score">0</div>
+                </div>
+            </div>
+
+            <div id="spawn-area">
+                </div>
+
+            <div id="bins-area">
+                
+                <div class="bin-wrapper" data-bin="compost" id="bin-compost-wrapper">
+                    <div class="bin-lid-back"></div>
+                    <div class="bin-opening"></div>
+                    <div class="bin">
+                        <svg class="bin-logo" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                            <path d="M2 12h20"/>
+                        </svg>
+                        <div class="bin-label">Compost</div>
+                    </div>
+                    <div class="bin-lip"></div>
+                </div>
+
+                <div class="bin-wrapper" data-bin="recycle" id="bin-recycle-wrapper">
+                    <div class="bin-lid-back"></div>
+                    <div class="bin-opening"></div>
+                    <div class="bin">
+                        <svg class="bin-logo" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 12c0 6-4.39 10-9.806 10C7.792 22 4.24 18.33 3 14"/>
+                            <path d="M2 10c0-6 4.39-10 9.806-10C16.208 0 19.76 3.67 21 8"/>
+                            <path d="m7 14-4-4-4 4"/>
+                            <path d="m21 8-4-4-4 4"/>
+                        </svg>
+                        <div class="bin-label">Recycle</div>
+                    </div>
+                    <div class="bin-lip"></div>
+                </div>
+
+                <div class="bin-wrapper" data-bin="landfill" id="bin-landfill-wrapper">
+                    <div class="bin-lid-back"></div>
+                    <div class="bin-opening"></div>
+                    <div class="bin">
+                        <svg class="bin-logo" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 6h18"/>
+                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                        </svg>
+                        <div class="bin-label">Landfill</div>
+                    </div>
+                    <div class="bin-lip"></div>
+                </div>
+
+            </div>
+        </div>
     </div>
 
-    <div id="ui-layer" style="opacity: 0;">
-        <div class="header panel">
-            <div class="sys-title">OVERLORD v19.0_APEX</div>
-            <div class="sys-clock" id="sys-clock">00:00:00:000</div>
-        </div>
-
-        <div class="left-col">
-            <div class="panel">
-                <div class="data-block">
-                    <div class="data-label">UPLINK STATUS</div>
-                    <div class="data-value" id="uplink-stat">AWAITING HANDSHAKE</div>
-                </div>
-                <div class="data-block">
-                    <div class="data-label">ENVIRONMENTAL ALBEDO / LUX</div>
-                    <div class="data-value" id="lux-val">0.00%</div>
-                    <div class="progress-container"><div class="progress-bar" id="lux-bar"></div><div class="progress-markers"></div></div>
-                </div>
-                <div class="data-block">
-                    <div class="data-label">SPECTRUM SIGNATURE</div>
-                    <div class="data-value" id="spectrum-val">SCANNING...</div>
-                </div>
-                <div class="data-block">
-                    <div class="data-label">PHOTON VARIANCE RATIO</div>
-                    <div class="data-value" id="variance-val">0.00</div>
-                </div>
-            </div>
+    <div id="feedback-overlay">
+        <div class="feedback-card">
+            <div class="feedback-icon" id="fb-icon">✅</div>
+            <h2 class="feedback-title" id="fb-title">Perfect Sort!</h2>
+            <div class="feedback-item-name" id="fb-item-name">Banana Peel</div>
             
-            <div class="panel" style="flex-grow: 1;">
-                <div class="data-label">TERMINAL / DIAGNOSTICS</div>
-                <div id="terminal-out"></div>
+            <div class="feedback-explanation">
+                <strong>Why?</strong> <span id="fb-desc">Banana peels decompose naturally...</span>
             </div>
-        </div>
 
-        <div class="right-col">
-            <div class="panel" style="padding: 0;">
-                <video id="raw-video" autoplay playsinline muted></video>
-                <div style="padding: 10px;">
-                    <div class="data-label">RAW OPTICAL FEED // IR FILTERED</div>
-                </div>
-            </div>
-            
-            <div class="panel">
-                <div class="data-block">
-                    <div class="data-label">BIOMETRIC TARGET</div>
-                    <div class="data-value" id="target-stat">UNLOCKED</div>
-                </div>
-                <div class="data-block">
-                    <div class="data-label">FACIAL MESH NODES</div>
-                    <div class="data-value" id="node-count">0 / 478</div>
-                </div>
-                <div class="data-block">
-                    <div class="data-label">FPS CALCULATION</div>
-                    <div class="data-value" id="fps-val">0</div>
-                </div>
-            </div>
+            <button class="btn-continue" onclick="GameController.nextTurn()">Continue Sorting</button>
         </div>
+    </div>
 
-        <div class="bottom-row">
-            <div class="panel" style="flex: 1;">
-                <div class="data-label">SPATIAL TELEMETRY (PITCH / YAW / ROLL)</div>
-                <div style="display: flex; justify-content: space-between; margin-top: 10px;">
-                    <div><span class="data-label">X: </span><span class="data-value" id="tel-x">0.00°</span></div>
-                    <div><span class="data-label">Y: </span><span class="data-value" id="tel-y">0.00°</span></div>
-                    <div><span class="data-label">Z: </span><span class="data-value" id="tel-z">0.00°</span></div>
+    <div id="screen-end" class="screen hidden">
+        <div class="scrollable-content slide-up" style="text-align: center; height: auto;">
+            <div class="edu-header">
+                <h1>Simulation Complete</h1>
+                <p>Analyzing your waste diversion impact...</p>
+            </div>
+
+            <div style="font-size: 4rem; font-weight: 900; color: var(--accent-green); margin: 20px 0;">
+                <span id="final-score">0</span> pts
+            </div>
+
+            <div class="edu-grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 40px;">
+                <div class="edu-card">
+                    <h3 style="justify-content:center; font-size: 1.2rem;">Accuracy</h3>
+                    <span class="data-stat" style="color:var(--accent-blue);" id="final-accuracy">0%</span>
+                </div>
+                <div class="edu-card">
+                    <h3 style="justify-content:center; font-size: 1.2rem;">Max Streak</h3>
+                    <span class="data-stat" style="color:#fbbf24;" id="final-streak">0</span>
+                </div>
+                <div class="edu-card">
+                    <h3 style="justify-content:center; font-size: 1.2rem;">Items Sorted</h3>
+                    <span class="data-stat" style="color:#fff;" id="final-items">0</span>
                 </div>
             </div>
-            <div class="panel" style="flex: 1;">
-                <div class="data-label">OCULAR & MANDIBLE STATE</div>
-                <div style="display: flex; justify-content: space-between; margin-top: 10px;">
-                    <div><span class="data-label">L_EYE EAR: </span><span class="data-value" id="eye-l">0.00</span></div>
-                    <div><span class="data-label">R_EYE EAR: </span><span class="data-value" id="eye-r">0.00</span></div>
-                    <div><span class="data-label">MANDIBLE: </span><span class="data-value" id="mouth-state">IDLE</span></div>
-                </div>
-            </div>
-            <div class="panel" style="flex: 1;">
-                <div class="data-label">ALBEDO WAVEFORM</div>
-                <canvas id="lux-canvas"></canvas>
-            </div>
+
+            <p style="margin-top: 30px; font-size: 1.2rem;">
+                Every correct choice reduces methane emissions, saves virgin resources, and builds the circular economy. Take this knowledge to the real bins!
+            </p>
+
+            <button class="btn-primary" onclick="location.reload()">Restart Simulation</button>
         </div>
     </div>
 
     <script>
-        // --- ARCHITECTURE GLOBALS ---
-        const sys = {
-            booted: false, active: false, overexposed: false,
-            frame: 0, lastTime: performance.now(), fps: 0,
-            luxHistory: new Array(100).fill(0),
-            audioCtx: null, osc: null, gainNode: null,
-            dom: {
-                boot: document.getElementById('boot-sequence'),
-                bootLog: document.getElementById('boot-log'),
-                ui: document.getElementById('ui-layer'),
-                lockout: document.getElementById('lockout-screen'),
-                term: document.getElementById('terminal-out'),
-                clock: document.getElementById('sys-clock'),
-                luxCanvas: document.getElementById('lux-canvas'),
-                rawVideo: document.getElementById('raw-video'),
-                feed: document.getElementById('cam-feed'),
-                buffer: document.getElementById('analysis-buffer'),
+        /**
+         * MASSIVE WASTE DATABASE (>100 Items)
+         * Carefully curated for accuracy based on standard municipal sorting guidelines.
+         */
+        const wasteDatabase = [
+            // ================== COMPOST (Organics / Soiled Paper) ==================
+            { emoji: "🍌", name: "Banana Peel", bin: "compost", desc: "Organic fruit waste breaks down easily into nutrient-rich soil amendment." },
+            { emoji: "🍎", name: "Apple Core", bin: "compost", desc: "Fruit scraps are high in nitrogen and perfect for municipal or backyard compost." },
+            { emoji: "☕", name: "Coffee Grounds", bin: "compost", desc: "Adds excellent nitrogen and organic matter to soil. A staple of good compost." },
+            { emoji: "📄", name: "Paper Coffee Filter", bin: "compost", desc: "Unbleached or bleached paper filters decompose fully alongside the coffee grounds." },
+            { emoji: "🥚", name: "Eggshells", bin: "compost", desc: "Adds valuable calcium to your compost pile, which plants love." },
+            { emoji: "🍵", name: "Used Tea Bags (Paper)", bin: "compost", desc: "Remove metal staples if possible, but the paper bag and tea leaves compost perfectly." },
+            { emoji: "🧻", name: "Soiled Paper Napkins", bin: "compost", desc: "Paper that touched food cannot be recycled into new paper, but it CAN be composted!" },
+            { emoji: "🍕", name: "Greasy Pizza Box (Bottom)", bin: "compost", desc: "Grease ruins the paper recycling process (water and oil don't mix in pulping). Soiled cardboard must be composted." },
+            { emoji: "🌿", name: "Grass Clippings", bin: "compost", desc: "Standard yard waste provides necessary 'green' nitrogen matter for composting." },
+            { emoji: "🍂", name: "Dead Leaves", bin: "compost", desc: "Excellent 'brown' carbon matter required for balancing a healthy compost pile." },
+            { emoji: "🥔", name: "Potato Peels", bin: "compost", desc: "Vegetable scraps break down easily and prevent methane creation in landfills." },
+            { emoji: "🥕", name: "Carrot Tops", bin: "compost", desc: "Leafy green vegetable trimmings decompose quickly." },
+            { emoji: "🧅", name: "Onion Skins", bin: "compost", desc: "Safe for municipal compost systems, adding layered organic material." },
+            { emoji: "🥑", name: "Avocado Skin & Pit", bin: "compost", desc: "Takes a bit longer to break down, but fully compostable in industrial facilities." },
+            { emoji: "🍞", name: "Moldy Bread", bin: "compost", desc: "Spoiled food belongs in the compost, not the trash. Microbes will finish eating it." },
+            { emoji: "🍝", name: "Plain Cooked Pasta", bin: "compost", desc: "Starchy foods decompose well in high-heat industrial composters." },
+            { emoji: "🍚", name: "Cooked Rice", bin: "compost", desc: "Organic food waste breaks down easily. Don't throw food in the trash!" },
+            { emoji: "🥜", name: "Peanut Shells", bin: "compost", desc: "Takes time but adds excellent physical structure and aeration to compost." },
+            { emoji: "🎃", name: "Pumpkin Seeds & Guts", bin: "compost", desc: "Perfect seasonal organic material." },
+            { emoji: "🍋", name: "Citrus Peels", bin: "compost", desc: "Compostable. They break down slowly and naturally deter some pests in backyard bins." },
+            { emoji: "🌽", name: "Corn Cobs", bin: "compost", desc: "Provides great aeration as it slowly breaks down in commercial compost." },
+            { emoji: "🪴", name: "Houseplant Trimmings", bin: "compost", desc: "Organic yard waste from indoor plants." },
+            { emoji: "💇", name: "Hair clippings", bin: "compost", desc: "Human or pet hair is rich in nitrogen and fully biodegradable." },
+            { emoji: "☁️", name: "100% Cotton Balls", bin: "compost", desc: "Pure natural plant fibers can be composted. (Avoid if soaked in harsh chemicals)." },
+            { emoji: "🧶", name: "Dryer Lint (Cotton/Wool)", bin: "compost", desc: "If drying natural fibers, the lint is compostable. (If synthetic clothes, it goes in trash)." },
+            { emoji: "🍡", name: "Wooden Popsicle Sticks", bin: "compost", desc: "Untreated wood breaks down naturally over time." },
+            { emoji: "🥢", name: "Wooden Chopsticks", bin: "compost", desc: "Disposable bamboo or wood chopsticks decompose nicely." },
+            { emoji: "🪵", name: "Sawdust (Untreated Wood)", bin: "compost", desc: "Great 'brown' carbon matter for compost structure." },
+            { emoji: "🧻", name: "Paper Towel Roll (Cardboard)", bin: "compost", desc: "Can be recycled, but also great for compost structure if torn up." },
+            { emoji: "📄", name: "Shredded Paper", bin: "compost", desc: "Often too small for recycling facility sorting screens to catch; better to compost it." },
+            { emoji: "🥤", name: "BPI Certified Compostable Cup", bin: "compost", desc: "Bioplastics (PLA) require the high heat of industrial compost facilities to break down." },
+            { emoji: "🍴", name: "Compostable Cutlery", bin: "compost", desc: "Must be certified compostable; goes to industrial facilities, never the landfill." },
+            { emoji: "🍑", name: "Peach Pit", bin: "compost", desc: "Breaks down over time in commercial facilities." },
+            { emoji: "🥗", name: "Spoiled Salad Greens", bin: "compost", desc: "Wet, green organic matter that turns into liquid methane in a landfill." },
+            { emoji: "🍽️", name: "Used Paper Plates (Uncoated)", bin: "compost", desc: "If not lined with plastic, soiled paper plates are highly compostable." },
+            { emoji: "🍖", name: "Chicken Bones", bin: "compost", desc: "Accepted in most municipal green bins! Industrial composters get hot enough to break down meat and bone." },
+            { emoji: "🧀", name: "Moldy Cheese", bin: "compost", desc: "Dairy is accepted in municipal green bins. It breaks down perfectly." },
+
+            // ================== RECYCLE (Clean Paper, Plastic, Glass, Metal) ==================
+            { emoji: "📦", name: "Clean Cardboard Box", bin: "recycle", desc: "Cardboard is highly recyclable and saves trees. Flatten it first!" },
+            { emoji: "📰", name: "Newspaper", bin: "recycle", desc: "Can be recycled into new paper products, egg cartons, or insulation." },
+            { emoji: "📄", name: "Office Printer Paper", bin: "recycle", desc: "High-grade white paper is very valuable for paper recyclers." },
+            { emoji: "✉️", name: "Junk Mail", bin: "recycle", desc: "Most paper mail, even with small plastic address windows, is recyclable." },
+            { emoji: "📖", name: "Magazines", bin: "recycle", desc: "Glossy paper is accepted in standard single-stream recycling." },
+            { emoji: "🥣", name: "Cereal Box", bin: "recycle", desc: "Paperboard is easily recycled. Just remove the inner plastic bag first!" },
+            { emoji: "🥫", name: "Aluminum Soda Can", bin: "recycle", desc: "Aluminum is infinitely recyclable without losing quality. A true circular material!" },
+            { emoji: "🥫", name: "Steel Soup Can", bin: "recycle", desc: "Steel is easily separated at facilities using giant magnets and is highly recyclable." },
+            { emoji: "🥡", name: "Clean Aluminum Foil", bin: "recycle", desc: "Clean foil (no baked-on food) can be melted down and reused." },
+            { emoji: "🍾", name: "Glass Water Bottle", bin: "recycle", desc: "Glass can be recycled endlessly into new glass products." },
+            { emoji: "🫙", name: "Glass Pasta Sauce Jar", bin: "recycle", desc: "Rinse it out first! Glass is infinitely recyclable." },
+            { emoji: "🧴", name: "Plastic Water Bottle (#1 PET)", bin: "recycle", desc: "PET plastic is widely accepted and turned into new bottles or polyester fiber." },
+            { emoji: "🥛", name: "Plastic Milk Jug (#2 HDPE)", bin: "recycle", desc: "High-Density Polyethylene is highly sought after by recycling commodity markets." },
+            { emoji: "🧼", name: "Laundry Detergent Bottle", bin: "recycle", desc: "Thick, durable #2 plastic that is very easy to recycle." },
+            { emoji: "🧴", name: "Shampoo Bottle", bin: "recycle", desc: "Usually #1 or #2 plastic. Empty it out and recycle!" },
+            { emoji: "🍦", name: "Yogurt Container (#5 PP)", bin: "recycle", desc: "Polypropylene is increasingly accepted in modern curbside programs." },
+            { emoji: "🧈", name: "Margarine Tub", bin: "recycle", desc: "Rigid plastics (tubs and jugs) are generally accepted and recycled." },
+            { emoji: "🍕", name: "Clean Pizza Box (Top Half)", bin: "recycle", desc: "If the top half has zero grease, tear it off and recycle it! Compost the greasy bottom." },
+            { emoji: "🥚", name: "Paper Egg Carton", bin: "recycle", desc: "Molded pulp is recyclable (and also compostable if you prefer)." },
+            { emoji: "💨", name: "Empty Aerosol Can", bin: "recycle", desc: "If completely empty and contained non-toxic materials (like whipped cream), the metal is recyclable." },
+            { emoji: "📒", name: "Phone Book", bin: "recycle", desc: "Low-grade paper, but fully recyclable." },
+            { emoji: "🎁", name: "Wrapping Paper (Paper only)", bin: "recycle", desc: "Standard paper wrap is recyclable. Foil or glitter wrap is NOT." },
+            { emoji: "🛍️", name: "Paper Shopping Bag", bin: "recycle", desc: "Kraft paper bags are easily recycled into new paper products." },
+            { emoji: "🗂️", name: "File Folders", bin: "recycle", desc: "Standard manila or colored paper folders belong in the recycling." },
+            { emoji: "📝", name: "Sticky Notes", bin: "recycle", desc: "The adhesive is removed during the paper pulping and washing process." },
+            { emoji: "🗺️", name: "Brochures and Pamphlets", bin: "recycle", desc: "Glossy or matte paper is completely recyclable." },
+            { emoji: "📚", name: "Paperback Book", bin: "recycle", desc: "Fully recyclable in the paper bin if you can't donate it." },
+            { emoji: "🥤", name: "Clear Plastic Cup", bin: "recycle", desc: "Rigid clear plastic cups (#1 or #5) are usually accepted. (No styrofoam!)." },
+            { emoji: "🍱", name: "Plastic Takeout Container", bin: "recycle", desc: "If rinsed free of food, these rigid plastics are recyclable." },
+            { emoji: "🍓", name: "Plastic Clamshells (Berries)", bin: "recycle", desc: "Usually #1 PET, acceptable in many advanced curbside programs." },
+            { emoji: "🧃", name: "Juice Cartons (Tetra Pak)", bin: "recycle", desc: "Many cities recycle these; they are hydro-pulped to recover the high-quality paper layer." },
+            { emoji: "🥛", name: "Milk Cartons", bin: "recycle", desc: "Gable-top cartons are widely recyclable in modern facilities." },
+            { emoji: "🍺", name: "Glass Beer Bottle", bin: "recycle", desc: "Sort by color if required, or single stream. Glass is infinitely recyclable." },
+            { emoji: "🛢️", name: "Large Olive Oil Tin", bin: "recycle", desc: "Steel and tin containers are highly recyclable." },
+            { emoji: "📔", name: "Spiral Notebook (Paper)", bin: "recycle", desc: "The paper is recyclable. (Ideally, remove the metal spiral first)." },
+            { emoji: "📐", name: "C++ Programming Textbook", bin: "recycle", desc: "Hardcovers require tearing the pages out to recycle, but paperbacks/pages are fully recyclable!" },
+
+            // ================== LANDFILL (Trash / Mixed Materials / E-Waste) ==================
+            { emoji: "🍟", name: "Potato Chip Bag", bin: "landfill", desc: "Made of mixed materials (plastic lined with metallic film) which cannot be economically separated." },
+            { emoji: "🍬", name: "Candy Wrapper", bin: "landfill", desc: "Flimsy, mixed-material plastics are not recyclable curbside. They are trash." },
+            { emoji: "☕", name: "Styrofoam Cup", bin: "landfill", desc: "Expanded polystyrene (EPS) is 95% air and rarely accepted in curbside recycling. Avoid buying it!" },
+            { emoji: "🌯", name: "Plastic Wrap (Saran Wrap)", bin: "landfill", desc: "Film plastics tangle up the spinning gears at recycling plants. Throw it out." },
+            { emoji: "🛍️", name: "Plastic Grocery Bags", bin: "landfill", desc: "These tangle in machinery! They require special drop-off at grocery stores, so in this game, they are trash." },
+            { emoji: "🍷", name: "Broken Drinking Glass", bin: "landfill", desc: "Treated glassware melts at a different temperature than bottle glass and ruins entire recycling batches." },
+            { emoji: "☕", name: "Broken Ceramic Mug", bin: "landfill", desc: "Ceramics cannot be melted down and recycled like glass. It goes to the landfill." },
+            { emoji: "💡", name: "Incandescent Light Bulb", bin: "landfill", desc: "Contain different materials and glass types; throw in trash. (LEDs need e-waste drop off)." },
+            { emoji: "👶", name: "Disposable Diapers", bin: "landfill", desc: "Contain human waste and complex mixed plastics. Pure landfill." },
+            { emoji: "🐶", name: "Pet Waste (in plastic bag)", bin: "landfill", desc: "Carnivore/omnivore waste contains pathogens and cannot be safely municipal-composted. Landfill." },
+            { emoji: "🐈", name: "Used Kitty Litter", bin: "landfill", desc: "Contains pathogens and clay/silica; belongs in the trash." },
+            { emoji: "🪥", name: "Toothpaste Tube", bin: "landfill", desc: "Mixed materials (layers of plastic and aluminum) make it unrecyclable." },
+            { emoji: "🪥", name: "Used Toothbrush", bin: "landfill", desc: "Nylon bristles and multi-plastic/rubber handles cannot be separated easily." },
+            { emoji: "🤧", name: "Used Tissues (Kleenex)", bin: "landfill", desc: "Fibers are too short to recycle, and bodily fluids make them a biohazard. Trash." },
+            { emoji: "👂", name: "Cotton Swabs (Plastic sticks)", bin: "landfill", desc: "Small plastic sticks are not recyclable and fall through sorting screens." },
+            { emoji: "🩹", name: "Used Band-Aids", bin: "landfill", desc: "Biohazard and complex mixed materials. Trash." },
+            { emoji: "🦷", name: "Dental Floss", bin: "landfill", desc: "Tangles in machinery and is usually made of synthetic nylon or Teflon." },
+            { emoji: "🧽", name: "Kitchen Sponge", bin: "landfill", desc: "Synthetic sponges are made of unrecyclable polyurethane plastics." },
+            { emoji: "🪵", name: "Treated Wood Scraps", bin: "landfill", desc: "Chemical treatments (like arsenic or copper) mean it cannot be composted safely." },
+            { emoji: "🧸", name: "Broken Plastic Toys", bin: "landfill", desc: "Made of complex, mixed, or unknown hard plastics with metal screws." },
+            { emoji: "☕", name: "Hot Coffee Cup (Paper)", bin: "landfill", desc: "Trick question! Standard paper coffee cups have an inner plastic liner that cannot be easily separated. Trash." },
+            { emoji: "🍴", name: "Plastic Cutlery", bin: "landfill", desc: "Too small, wrong shape, and low-grade plastic for optical sorters to catch." },
+            { emoji: "🥤", name: "Plastic Straws", bin: "landfill", desc: "Too small and lightweight; they fall right through the recycling sorting screens." },
+            { emoji: "🧃", name: "Capri Sun / Juice Pouches", bin: "landfill", desc: "Foil and plastic layers fused permanently together. Unrecyclable." },
+            { emoji: "🥫", name: "Condiment Packets", bin: "landfill", desc: "Mixed materials and way too small to sort." },
+            { emoji: "💊", name: "Empty Pill Blister Packs", bin: "landfill", desc: "Foil and plastic fused together. Trash." },
+            { emoji: "🖼️", name: "Glossy Photographs", bin: "landfill", desc: "Photographic paper is coated in heavy chemicals and plastics." },
+            { emoji: "📄", name: "Laminated Paper", bin: "landfill", desc: "Paper permanently fused with plastic cannot be separated." },
+            { emoji: "🧾", name: "Thermal Store Receipts", bin: "landfill", desc: "Coated with BPA/BPS chemicals; do NOT recycle or compost them to avoid contaminating the streams." },
+            { emoji: "🍏", name: "Squeezable Applesauce Pouch", bin: "landfill", desc: "Multi-layered mixed materials. Trash." },
+            { emoji: "🥫", name: "Pringles Can", bin: "landfill", desc: "Cardboard tube, metal bottom, plastic lid. Mixed materials = trash." },
+            { emoji: "🥜", name: "Packing Peanuts (Styrofoam)", bin: "landfill", desc: "Foam peanuts fly around and contaminate recycling. Trash." },
+            { emoji: "🫧", name: "Bubble Wrap", bin: "landfill", desc: "Film plastic that tangles in machinery." },
+            { emoji: "🧻", name: "Used Wet Wipes", bin: "landfill", desc: "Made of synthetic plastic fibers that do not break down. NEVER flush them; put in trash." },
+            { emoji: "🧺", name: "Dryer Sheets", bin: "landfill", desc: "Made of synthetic polyester fibers covered in chemicals. Trash." },
+            { emoji: "🖊️", name: "Empty Ballpoint Pen", bin: "landfill", desc: "Mixed hard plastics and metals. Trash." },
+            { emoji: "🕶️", name: "Broken Sunglasses", bin: "landfill", desc: "Mixed plastics, metals, and glass/polycarbonate lenses. Unrecyclable." },
+            { emoji: "🎧", name: "Broken AirPods Case", bin: "landfill", desc: "E-Waste contains batteries and circuits. While it needs a special drop-off, in a standard 3-bin system, it's trash, NEVER recycle or compost." },
+            { emoji: "🚁", name: "Broken Drone Propeller", bin: "landfill", desc: "Hard, complex plastics often mixed with carbon fiber. Unrecyclable." },
+            { emoji: "🏈", name: "Deflated Football", bin: "landfill", desc: "Synthetic leather/rubber/plastic bladder cannot be recycled." },
+            { emoji: "🖱️", name: "Old Broken Mouse", bin: "landfill", desc: "E-waste. Keep out of recycling and compost! Treat as landfill for this game." },
+            { emoji: "💻", name: "Broken Raspberry Pi Board", bin: "landfill", desc: "Circuit boards contain heavy metals. Needs e-waste recycling, so standard bins = Landfill to keep out of paper/plastic streams." }
+        ];
+
+        /**
+         * AUDIO ENGINE (Web Audio API Synthesizer)
+         * No external assets needed.
+         */
+        class AudioEngine {
+            constructor() {
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            playTone(freq, type, duration, vol=0.1) {
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
                 
-                // UI Readouts
-                uStat: document.getElementById('uplink-stat'),
-                lVal: document.getElementById('lux-val'),
-                lBar: document.getElementById('lux-bar'),
-                sVal: document.getElementById('spectrum-val'),
-                vVal: document.getElementById('variance-val'),
-                tStat: document.getElementById('target-stat'),
-                nCount: document.getElementById('node-count'),
-                fpsVal: document.getElementById('fps-val'),
-                telX: document.getElementById('tel-x'),
-                telY: document.getElementById('tel-y'),
-                telZ: document.getElementById('tel-z'),
-                eyeL: document.getElementById('eye-l'),
-                eyeR: document.getElementById('eye-r'),
-                mouth: document.getElementById('mouth-state')
+                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+                
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + duration);
+            }
+
+            playCorrect() {
+                this.playTone(440, 'sine', 0.1, 0.1);
+                setTimeout(() => this.playTone(660, 'sine', 0.2, 0.1), 100);
+            }
+
+            playIncorrect() {
+                this.playTone(200, 'sawtooth', 0.3, 0.1);
+                setTimeout(() => this.playTone(150, 'sawtooth', 0.4, 0.1), 150);
+            }
+
+            playGrab() {
+                this.playTone(300, 'triangle', 0.1, 0.05);
+            }
+
+            playDrop() {
+                this.playTone(100, 'square', 0.1, 0.05);
+            }
+        }
+
+        const audio = new AudioEngine();
+
+        /**
+         * PARTICLE SYSTEM (Confetti / Dust)
+         */
+        class ParticleSystem {
+            constructor() {
+                this.canvas = document.getElementById('particle-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.particles = [];
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+                this.animate();
+            }
+
+            resize() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+            }
+
+            spawnConfetti(x, y) {
+                const colors = ['#10b981', '#3b82f6', '#fbbf24', '#ef4444', '#a855f7'];
+                for (let i = 0; i < 50; i++) {
+                    this.particles.push({
+                        x: x, y: y,
+                        vx: (Math.random() - 0.5) * 15,
+                        vy: (Math.random() - 0.5) * 15 - 5,
+                        size: Math.random() * 8 + 4,
+                        color: colors[Math.floor(Math.random() * colors.length)],
+                        life: 1,
+                        decay: Math.random() * 0.02 + 0.01,
+                        type: 'confetti'
+                    });
+                }
+            }
+
+            spawnSmoke(x, y) {
+                for (let i = 0; i < 20; i++) {
+                    this.particles.push({
+                        x: x + (Math.random()-0.5)*40, 
+                        y: y + (Math.random()-0.5)*20,
+                        vx: (Math.random() - 0.5) * 2,
+                        vy: -Math.random() * 3 - 1,
+                        size: Math.random() * 20 + 10,
+                        color: `rgba(100, 100, 100, 0.5)`,
+                        life: 1,
+                        decay: Math.random() * 0.05 + 0.02,
+                        type: 'smoke'
+                    });
+                }
+            }
+
+            animate() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                for (let i = this.particles.length - 1; i >= 0; i--) {
+                    let p = this.particles[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.life -= p.decay;
+
+                    if (p.type === 'confetti') {
+                        p.vy += 0.5; // gravity
+                        this.ctx.fillStyle = p.color;
+                        this.ctx.globalAlpha = p.life;
+                        this.ctx.fillRect(p.x, p.y, p.size, p.size);
+                    } else if (p.type === 'smoke') {
+                        this.ctx.fillStyle = p.color;
+                        this.ctx.globalAlpha = p.life;
+                        this.ctx.beginPath();
+                        this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                        this.ctx.fill();
+                    }
+
+                    if (p.life <= 0) this.particles.splice(i, 1);
+                }
+                this.ctx.globalAlpha = 1;
+                requestAnimationFrame(() => this.animate());
+            }
+        }
+
+        const particles = new ParticleSystem();
+
+        /**
+         * GAME LOGIC CONTROLLER
+         */
+        const GameController = {
+            TURNS_PER_GAME: 20,
+            currentTurn: 0,
+            score: 0,
+            streak: 0,
+            maxStreak: 0,
+            correctCount: 0,
+            usedItems: new Set(),
+            currentItemData: null,
+            dragElement: null,
+
+            // Drag State
+            isDragging: false,
+            startX: 0, startY: 0,
+            currentX: 0, currentY: 0,
+            initialTransform: '',
+
+            start() {
+                document.getElementById('screen-intro').classList.add('hidden');
+                document.getElementById('screen-game').classList.remove('hidden');
+                this.updateHUD();
+                this.spawnItem();
+            },
+
+            spawnItem() {
+                // Check End Game
+                if (this.currentTurn >= this.TURNS_PER_GAME) {
+                    this.endGame();
+                    return;
+                }
+
+                // Pick random item not used
+                let randomIndex;
+                do {
+                    randomIndex = Math.floor(Math.random() * wasteDatabase.length);
+                } while (this.usedItems.has(randomIndex) && this.usedItems.size < wasteDatabase.length);
+                
+                this.usedItems.add(randomIndex);
+                this.currentItemData = wasteDatabase[randomIndex];
+
+                // Create DOM Element
+                const spawnArea = document.getElementById('spawn-area');
+                spawnArea.innerHTML = ''; // clear old
+
+                const el = document.createElement('div');
+                el.className = 'waste-item-container anim-spawn';
+                el.innerHTML = `
+                    <div class="waste-visual">${this.currentItemData.emoji}</div>
+                    <div class="waste-label">${this.currentItemData.name}</div>
+                `;
+                
+                spawnArea.appendChild(el);
+                this.dragElement = el;
+
+                // Setup Drag Events
+                this.setupDrag(el);
+            },
+
+            setupDrag(el) {
+                const startDrag = (e) => {
+                    if(e.type === 'touchstart') e.preventDefault();
+                    this.isDragging = true;
+                    el.classList.remove('anim-spawn');
+                    audio.playGrab();
+                    
+                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                    
+                    const rect = el.getBoundingClientRect();
+                    this.startX = clientX - rect.left - (rect.width/2);
+                    this.startY = clientY - rect.top - (rect.height/2);
+                    
+                    el.style.zIndex = 1000;
+                };
+
+                const doDrag = (e) => {
+                    if (!this.isDragging) return;
+                    e.preventDefault();
+                    
+                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                    
+                    this.currentX = clientX - window.innerWidth/2 - this.startX;
+                    this.currentY = clientY - window.innerHeight/2 + 100 - this.startY; // Offset for spawn area
+                    
+                    el.style.transform = `translate(${this.currentX}px, ${this.currentY}px) rotate(${this.currentX * 0.05}deg)`;
+
+                    this.checkHover(clientX, clientY);
+                };
+
+                const endDrag = (e) => {
+                    if (!this.isDragging) return;
+                    this.isDragging = false;
+                    
+                    const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+                    const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+                    
+                    const dropTarget = this.checkHover(clientX, clientY);
+                    
+                    // Reset styling on bins
+                    document.querySelectorAll('.bin-wrapper').forEach(b => b.classList.remove('drag-over'));
+
+                    if (dropTarget) {
+                        this.processSort(dropTarget.dataset.bin, clientX, clientY);
+                    } else {
+                        // Snap back
+                        el.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                        el.style.transform = `translate(0px, 0px) rotate(0deg)`;
+                        setTimeout(() => el.style.transition = '', 300);
+                        audio.playDrop();
+                    }
+                };
+
+                el.addEventListener('mousedown', startDrag);
+                window.addEventListener('mousemove', doDrag, {passive: false});
+                window.addEventListener('mouseup', endDrag);
+
+                el.addEventListener('touchstart', startDrag, {passive: false});
+                window.addEventListener('touchmove', doDrag, {passive: false});
+                window.addEventListener('touchend', endDrag);
+            },
+
+            checkHover(x, y) {
+                let target = null;
+                document.querySelectorAll('.bin-wrapper').forEach(bin => {
+                    const rect = bin.getBoundingClientRect();
+                    if (x > rect.left && x < rect.right && y > rect.top && y < rect.bottom) {
+                        bin.classList.add('drag-over');
+                        target = bin;
+                    } else {
+                        bin.classList.remove('drag-over');
+                    }
+                });
+                return target;
+            },
+
+            processSort(selectedBin, dropX, dropY) {
+                this.dragElement.style.display = 'none'; // hide item
+                this.currentTurn++;
+
+                const isCorrect = (selectedBin === this.currentItemData.bin);
+
+                if (isCorrect) {
+                    audio.playCorrect();
+                    particles.spawnConfetti(dropX, dropY);
+                    this.correctCount++;
+                    this.streak++;
+                    if (this.streak > this.maxStreak) this.maxStreak = this.streak;
+                    
+                    // Calculate score (base 100 * streak multiplier)
+                    let multiplier = Math.min(this.streak, 5); // cap multiplier at 5x
+                    this.score += (100 * multiplier);
+                    
+                    this.animateStreak();
+                    this.showFeedback(true);
+                } else {
+                    audio.playIncorrect();
+                    particles.spawnSmoke(dropX, dropY);
+                    this.streak = 0;
+                    this.showFeedback(false, selectedBin);
+                }
+
+                this.updateHUD();
+            },
+
+            animateStreak() {
+                const el = document.getElementById('streak-multiplier');
+                el.classList.remove('streak-pop');
+                void el.offsetWidth; // trigger reflow
+                el.classList.add('streak-pop');
+            },
+
+            updateHUD() {
+                document.getElementById('ui-items').innerText = `${this.currentTurn} / ${this.TURNS_PER_GAME}`;
+                document.getElementById('ui-score').innerText = this.score;
+                
+                const streakEl = document.getElementById('streak-multiplier');
+                let mult = Math.min(this.streak, 5);
+                streakEl.innerText = this.streak > 0 ? `x${mult}` : `x1`;
+                streakEl.style.color = this.streak >= 5 ? '#ef4444' : (this.streak >= 3 ? '#fbbf24' : '#94a3b8');
+            },
+
+            showFeedback(isCorrect, selectedBin = null) {
+                const overlay = document.getElementById('feedback-overlay');
+                const title = document.getElementById('fb-title');
+                const icon = document.getElementById('fb-icon');
+                const desc = document.getElementById('fb-desc');
+                const name = document.getElementById('fb-item-name');
+
+                name.innerText = `${this.currentItemData.emoji} ${this.currentItemData.name}`;
+                desc.innerText = this.currentItemData.desc;
+
+                if (isCorrect) {
+                    title.innerText = "Correct Sort!";
+                    title.className = "feedback-title correct";
+                    icon.innerText = "✅";
+                } else {
+                    let correctBinStr = this.currentItemData.bin.charAt(0).toUpperCase() + this.currentItemData.bin.slice(1);
+                    title.innerText = `Oops! That goes in ${correctBinStr}`;
+                    title.className = "feedback-title incorrect";
+                    icon.innerText = "❌";
+                }
+
+                overlay.classList.add('active');
+            },
+
+            nextTurn() {
+                document.getElementById('feedback-overlay').classList.remove('active');
+                setTimeout(() => this.spawnItem(), 300); // Wait for modal to fade
+            },
+
+            endGame() {
+                document.getElementById('screen-game').classList.add('hidden');
+                document.getElementById('screen-end').classList.remove('hidden');
+
+                document.getElementById('final-score').innerText = this.score;
+                document.getElementById('final-accuracy').innerText = Math.round((this.correctCount / this.TURNS_PER_GAME) * 100) + '%';
+                document.getElementById('final-streak').innerText = this.maxStreak;
+                document.getElementById('final-items').innerText = this.correctCount;
             }
         };
 
-        const ctx2d = sys.dom.buffer.getContext('2d', { willReadFrequently: true });
-        const waveCtx = sys.dom.luxCanvas.getContext('2d');
-
-        // --- UTILITY: LOGGER ---
-        function logMsg(msg, isError = false) {
-            const time = new Date().toISOString().split('T')[1].slice(0, -1);
-            const line = document.createElement('div');
-            line.innerHTML = `<span style="color:#555">[${time}]</span> <span style="color:${isError?'#ff003c':'#00f2ff'}">${msg}</span>`;
-            sys.dom.term.appendChild(line);
-            if (sys.dom.term.childNodes.length > 20) sys.dom.term.removeChild(sys.dom.term.firstChild);
-            sys.dom.term.scrollTop = sys.dom.term.scrollHeight;
-        }
-
-        // --- AUDIO ENGINE ---
-        function initAudio() {
-            sys.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            sys.osc = sys.audioCtx.createOscillator();
-            sys.gainNode = sys.audioCtx.createGain();
-            sys.osc.type = 'sine';
-            sys.osc.frequency.setValueAtTime(55, sys.audioCtx.currentTime); // Low hum
-            sys.gainNode.gain.setValueAtTime(0.05, sys.audioCtx.currentTime);
-            sys.osc.connect(sys.gainNode);
-            sys.gainNode.connect(sys.audioCtx.destination);
-            sys.osc.start();
-        }
-
-        function beep(freq = 880, dur = 0.1) {
-            if (!sys.audioCtx) return;
-            const osc = sys.audioCtx.createOscillator();
-            const gain = sys.audioCtx.createGain();
-            osc.type = 'square';
-            osc.frequency.setValueAtTime(freq, sys.audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.02, sys.audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.0001, sys.audioCtx.currentTime + dur);
-            osc.connect(gain);
-            gain.connect(sys.audioCtx.destination);
-            osc.start();
-            osc.stop(sys.audioCtx.currentTime + dur);
-        }
-
-        // --- BOOT SEQUENCE ---
-        async function initOS() {
-            if (sys.booted) return;
-            sys.booted = true;
-            initAudio();
-            document.documentElement.requestFullscreen().catch(e=>console.log("FS bypass"));
-            
-            const logs = [
-                "INITIATING KERNEL... OK",
-                "LOADING MODULES: [WEBGL, MEDIAPIPE, NEURAL_NET]... OK",
-                "MOUNTING VIRTUAL FILE SYSTEMS... OK",
-                "ESTABLISHING CAMERA UPLINK...",
-                "BYPASSING SECURITY PROTOCOLS... [WARNING: ILLEGAL OPERATION]",
-                "INJECTING OVERLORD PAYLOAD...",
-                "COMPILING SHADERS...",
-                "CALIBRATING ALBEDO SENSORS...",
-                "SYSTEM READY."
-            ];
-
-            sys.dom.boot.innerHTML = '';
-            for (let i = 0; i < logs.length; i++) {
-                const el = document.createElement('div');
-                el.innerText = logs[i];
-                sys.dom.boot.appendChild(el);
-                beep(440 + (i*50), 0.05);
-                await new Promise(r => setTimeout(r, Math.random() * 300 + 100));
-            }
-
-            sys.dom.boot.style.display = 'none';
-            sys.dom.ui.style.opacity = '1';
-            sys.active = true;
-            logMsg("SYSTEM ONLINE. AWAITING TARGET.");
-            startCamera();
-        }
-
-        // --- THREE.JS GRAPHICS ENGINE ---
-        const scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x000205, 0.001);
-        
-        const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 5000);
-        camera.position.z = 1000;
-
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
-        renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.getElementById('webgl-container').appendChild(renderer.domElement);
-
-        // Post-Processing
-        const composer = new THREE.EffectComposer(renderer);
-        const renderPass = new THREE.RenderPass(scene, camera);
-        composer.addPass(renderPass);
-        
-        const bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-        bloomPass.threshold = 0.2;
-        bloomPass.strength = 2.0;
-        bloomPass.radius = 0.5;
-        composer.addPass(bloomPass);
-
-        // Scene Objects
-        const bgGrid = new THREE.GridHelper(10000, 200, 0x002244, 0x000a14);
-        bgGrid.position.y = -600;
-        bgGrid.position.z = -1000;
-        scene.add(bgGrid);
-
-        const pointGeo = new THREE.BufferGeometry();
-        const positions = new Float32Array(478 * 3);
-        const colors = new Float32Array(478 * 3);
-        pointGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        pointGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-        const pointMat = new THREE.PointsMaterial({
-            size: 4, vertexColors: true, transparent: true, opacity: 0.8,
-            blending: THREE.AdditiveBlending, sizeAttenuation: true
-        });
-        const pointCloud = new THREE.Points(pointGeo, pointMat);
-        scene.add(pointCloud);
-
-        // Connections (Wireframe)
-        const lineMat = new THREE.LineBasicMaterial({ color: 0x00f2ff, transparent: true, opacity: 0.15, blending: THREE.AdditiveBlending });
-        const lineGeo = new THREE.BufferGeometry();
-        const lineIndices = [];
-        // Approximate delaunay triangulation pattern for aesthetics
-        for(let i=0; i<470; i+=2) { lineIndices.push(i, i+1, i+2); }
-        lineGeo.setIndex(lineIndices);
-        lineGeo.setAttribute('position', pointGeo.getAttribute('position'));
-        const lineMesh = new THREE.LineSegments(lineGeo, lineMat);
-        scene.add(lineMesh);
-
-        // Dynamic Orbits
-        const orbitGroup = new THREE.Group();
-        for(let i=0; i<3; i++) {
-            const ringGeo = new THREE.RingGeometry(600 + (i*100), 602 + (i*100), 64);
-            const ringMat = new THREE.MeshBasicMaterial({ color: 0x00f2ff, transparent: true, opacity: 0.1, side: THREE.DoubleSide, wireframe: true });
-            const ring = new THREE.Mesh(ringGeo, ringMat);
-            ring.rotation.x = Math.random() * Math.PI;
-            ring.rotation.y = Math.random() * Math.PI;
-            orbitGroup.add(ring);
-        }
-        scene.add(orbitGroup);
-
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            composer.setSize(window.innerWidth, window.innerHeight);
-        });
-
-        // --- CORE LOGIC: ALBEDO / LUMINANCE ANALYSIS ---
-        function processEnvironment() {
-            if (sys.dom.feed.readyState !== 4) return;
-            
-            sys.dom.buffer.width = 128; sys.dom.buffer.height = 128;
-            ctx2d.drawImage(sys.dom.feed, 0, 0, 128, 128);
-            const data = ctx2d.getImageData(0, 0, 128, 128).data;
-            
-            let totalLum = 0, minLum = 255, maxLum = 0;
-            for (let i = 0; i < data.length; i += 4) {
-                let r = data[i], g = data[i+1], b = data[i+2];
-                let lum = 0.2126 * r + 0.7152 * g + 0.0722 * b; // Photometric luminance
-                totalLum += lum;
-                if(lum < minLum) minLum = lum;
-                if(lum > maxLum) maxLum = lum;
-            }
-            
-            const avgLum = totalLum / (128 * 128);
-            const contrastVariance = maxLum - minLum;
-            const luxPercent = (avgLum / 255) * 100;
-            
-            sys.luxHistory.push(luxPercent);
-            sys.luxHistory.shift();
-
-            // UI Updates
-            sys.dom.lVal.innerText = `${luxPercent.toFixed(2)}%`;
-            sys.dom.lBar.style.width = `${luxPercent}%`;
-            sys.dom.vVal.innerText = contrastVariance.toFixed(1);
-
-            // Spectrum Classification Logic (Replacing unsafe race mapping)
-            let specStr = "OPTIMAL LOW-LIGHT";
-            sys.dom.sVal.className = "data-value";
-            
-            if (luxPercent < 15) { specStr = "DARK MATTER / IR REQUIRED"; sys.dom.sVal.className = "data-value warn"; }
-            else if (luxPercent > 40 && luxPercent < 70) { specStr = "HIGH ALBEDO SIGNATURE"; }
-            else if (luxPercent >= 70) { specStr = "CRITICAL PHOTON SATURATION"; sys.dom.sVal.className = "data-value danger"; }
-            
-            sys.dom.sVal.innerText = specStr;
-
-            // Overexposure Lockout Protocol
-            if (luxPercent >= 70) {
-                if (!sys.overexposed) {
-                    sys.overexposed = true;
-                    sys.dom.lockout.style.display = 'flex';
-                    sys.dom.lBar.style.background = 'var(--alert-red)';
-                    logMsg("ERR: SENSOR OVERLOAD. LOCKING BIOMETRICS.", true);
-                    beep(200, 0.5);
-                    bloomPass.strength = 5.0; // Blow out the visuals
-                }
-            } else {
-                if (sys.overexposed) {
-                    sys.overexposed = false;
-                    sys.dom.lockout.style.display = 'none';
-                    sys.dom.lBar.style.background = 'var(--core-cyan)';
-                    logMsg("LUMINANCE NORMALIZED. RESUMING SCAN.");
-                    bloomPass.strength = 2.0;
-                }
-            }
-
-            drawWaveform();
-        }
-
-        function drawWaveform() {
-            sys.dom.luxCanvas.width = sys.dom.luxCanvas.clientWidth;
-            sys.dom.luxCanvas.height = sys.dom.luxCanvas.clientHeight;
-            waveCtx.clearRect(0, 0, sys.dom.luxCanvas.width, sys.dom.luxCanvas.height);
-            
-            waveCtx.beginPath();
-            waveCtx.strokeStyle = sys.overexposed ? 'red' : '#00f2ff';
-            waveCtx.lineWidth = 2;
-            
-            const slice = sys.dom.luxCanvas.width / sys.luxHistory.length;
-            for(let i=0; i<sys.luxHistory.length; i++) {
-                const x = i * slice;
-                const y = sys.dom.luxCanvas.height - (sys.luxHistory[i] / 100 * sys.dom.luxCanvas.height);
-                if(i===0) waveCtx.moveTo(x, y);
-                else waveCtx.lineTo(x, y);
-            }
-            waveCtx.stroke();
-            
-            // Draw threshold line
-            waveCtx.beginPath();
-            waveCtx.strokeStyle = 'rgba(255,0,60,0.5)';
-            waveCtx.setLineDash([5, 5]);
-            waveCtx.moveTo(0, sys.dom.luxCanvas.height * 0.3); // 70% threshold visually
-            waveCtx.lineTo(sys.dom.luxCanvas.width, sys.dom.luxCanvas.height * 0.3);
-            waveCtx.stroke();
-            waveCtx.setLineDash([]);
-        }
-
-        // --- CORE LOGIC: BIOMETRIC AI ---
-        const faceAI = new FaceMesh({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`});
-        faceAI.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.7, minTrackingConfidence: 0.7 });
-
-        faceAI.onResults((res) => {
-            if (sys.overexposed) {
-                resetBiometrics();
-                return;
-            }
-
-            if (res.multiFaceLandmarks && res.multiFaceLandmarks.length > 0) {
-                sys.dom.tStat.innerText = "LOCKED";
-                sys.dom.tStat.className = "data-value";
-                sys.dom.nCount.innerText = "478 / 478";
-                
-                const marks = res.multiFaceLandmarks[0];
-                const pos = pointGeo.attributes.position.array;
-                const col = pointGeo.attributes.color.array;
-                const scaleX = window.innerWidth < 768 ? 600 : 1200;
-                const scaleY = scaleX;
-                const scaleZ = scaleX;
-
-                // Telemetry Calculation Math
-                const n = marks[1];   // Nose tip
-                const c = marks[152]; // Chin
-                const le = marks[33]; // Left eye outer
-                const re = marks[263];// Right eye outer
-
-                // Pitch, Yaw, Roll approx
-                const pitch = (((n.y - c.y) * -100) + 15).toFixed(2);
-                const yaw = ((re.z - le.z) * 100).toFixed(2);
-                const roll = ((re.y - le.y) * 100).toFixed(2);
-                
-                sys.dom.telX.innerText = `${pitch}°`;
-                sys.dom.telY.innerText = `${yaw}°`;
-                sys.dom.telZ.innerText = `${roll}°`;
-
-                // Eye Aspect Ratio (EAR) Math
-                const calcEAR = (p1, p2, p3, p4, p5, p6) => {
-                    const v1 = Math.hypot(marks[p2].x - marks[p6].x, marks[p2].y - marks[p6].y);
-                    const v2 = Math.hypot(marks[p3].x - marks[p5].x, marks[p3].y - marks[p5].y);
-                    const h = Math.hypot(marks[p1].x - marks[p4].x, marks[p1].y - marks[p4].y);
-                    return ((v1 + v2) / (2.0 * h)).toFixed(3);
-                };
-
-                const earL = calcEAR(33, 160, 158, 133, 153, 144);
-                const earR = calcEAR(362, 385, 387, 263, 373, 380);
-                sys.dom.eyeL.innerText = earL; sys.dom.eyeR.innerText = earR;
-
-                if (earL < 0.2 || earR < 0.2) { sys.dom.eyeL.className = "data-value warn"; } 
-                else { sys.dom.eyeL.className = "data-value"; }
-
-                // Mouth State Math
-                const mTop = marks[13]; const mBot = marks[14];
-                const mDist = Math.abs(mTop.y - mBot.y);
-                if (mDist > 0.02) { sys.dom.mouth.innerText = "VOCALIZING"; sys.dom.mouth.className = "data-value warn"; }
-                else { sys.dom.mouth.innerText = "IDLE"; sys.dom.mouth.className = "data-value"; }
-
-                // Map 3D Geometry
-                for (let i = 0; i < 478; i++) {
-                    pos[i*3] = (marks[i].x - 0.5) * -scaleX;
-                    pos[i*3+1] = (marks[i].y - 0.5) * -scaleY + 100; // Offset Y slightly
-                    pos[i*3+2] = marks[i].z * scaleZ;
-
-                    // Dynamic Color Mapping based on facial region
-                    let r = 0, g = 0.95, b = 1.0; // Default cyan
-                    
-                    // Lips: Red shift
-                    if (i >= 0 && i <= 17 || i >= 61 && i <= 81) { r = 1.0; g = 0.0; b = 0.2; }
-                    // Eyes: Amber shift
-                    else if (i >= 133 && i <= 155 || i >= 362 && i <= 385) { r = 1.0; g = 0.6; b = 0.0; }
-                    
-                    // Flash mesh if vocalizing
-                    if(mDist > 0.03) { r=1; g=0; b=0; }
-
-                    col[i*3] = r; col[i*3+1] = g; col[i*3+2] = b;
-                }
-                
-                pointGeo.attributes.position.needsUpdate = true;
-                pointGeo.attributes.color.needsUpdate = true;
-                lineGeo.attributes.position.needsUpdate = true;
-                
-                // Track mesh to head rotation visually
-                pointCloud.rotation.y = (yaw / 100);
-                pointCloud.rotation.x = (pitch / 100);
-                lineMesh.rotation.y = (yaw / 100);
-                lineMesh.rotation.x = (pitch / 100);
-
-            } else {
-                resetBiometrics();
-            }
-        });
-
-        function resetBiometrics() {
-            sys.dom.tStat.innerText = "SEARCHING..."; sys.dom.tStat.className = "data-value warn";
-            sys.dom.nCount.innerText = "0 / 478";
-            sys.dom.telX.innerText = "--"; sys.dom.telY.innerText = "--"; sys.dom.telZ.innerText = "--";
-            sys.dom.eyeL.innerText = "--"; sys.dom.eyeR.innerText = "--"; sys.dom.mouth.innerText = "--";
-            
-            const pos = pointGeo.attributes.position.array;
-            for(let i=0; i<pos.length; i++) { pos[i] *= 0.9; } // Shrink to center
-            pointGeo.attributes.position.needsUpdate = true;
-            lineGeo.attributes.position.needsUpdate = true;
-        }
-
-        // --- CAMERA INITIALIZATION ---
-        function startCamera() {
-            const cam = new Camera(sys.dom.feed, {
-                onFrame: async () => {
-                    if(!sys.active) return;
-                    processEnvironment();
-                    await faceAI.send({image: sys.dom.feed});
-                },
-                width: 640, height: 480, facingMode: 'user'
-            });
-            
-            cam.start().then(() => {
-                logMsg("UPLINK SECURED. FEED STREAMING.");
-                sys.dom.uStat.innerText = "CONNECTED";
-                sys.dom.uStat.className = "data-value";
-                sys.dom.rawVideo.srcObject = sys.dom.feed.srcObject;
-            }).catch(err => {
-                logMsg("FATAL: HARDWARE ACCESS DENIED.", true);
-                sys.dom.uStat.innerText = "OFFLINE";
-                sys.dom.uStat.className = "data-value danger";
-            });
-        }
-
-        // --- MAIN RENDER LOOP ---
-        function updateClock() {
-            const now = new Date();
-            const h = String(now.getHours()).padStart(2, '0');
-            const m = String(now.getMinutes()).padStart(2, '0');
-            const s = String(now.getSeconds()).padStart(2, '0');
-            const ms = String(now.getMilliseconds()).padStart(3, '0');
-            sys.dom.clock.innerText = `${h}:${m}:${s}:${ms}`;
-        }
-
-        function animate() {
-            requestAnimationFrame(animate);
-            if (!sys.active) return;
-
-            // Frame calculation
-            sys.frame++;
-            const now = performance.now();
-            if (now - sys.lastTime >= 1000) {
-                sys.fps = sys.frame;
-                sys.dom.fpsVal.innerText = sys.fps;
-                if(sys.fps < 20) sys.dom.fpsVal.className = "data-value danger";
-                else if(sys.fps < 40) sys.dom.fpsVal.className = "data-value warn";
-                else sys.dom.fpsVal.className = "data-value";
-                sys.frame = 0;
-                sys.lastTime = now;
-            }
-
-            updateClock();
-
-            // Environmental Animation
-            bgGrid.position.z += 2;
-            if (bgGrid.position.z > 0) bgGrid.position.z = -1000;
-            
-            orbitGroup.children.forEach((ring, index) => {
-                ring.rotation.x += 0.005 * (index + 1);
-                ring.rotation.y += 0.002 * (index + 1);
-            });
-
-            // Random Terminal Data Injection
-            if (Math.random() < 0.02) {
-                const hex = Math.floor(Math.random() * 0xffffff).toString(16).toUpperCase();
-                logMsg(`PACKET RX: 0x${hex} // ${Math.random().toFixed(4)}`);
-            }
-
-            // Post-processing render
-            composer.render();
-        }
-
-        // Init loops
-        requestAnimationFrame(animate);
-        setInterval(updateClock, 50);
-
+        // Initialize App
+        window.onload = () => {
+            // Pre-warm audio context slightly
+            document.body.addEventListener('click', () => {
+                if (audio.ctx.state === 'suspended') audio.ctx.resume();
+            }, { once: true });
+        };
     </script>
 </body>
 </html>
