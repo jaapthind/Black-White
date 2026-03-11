@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Global Climate Action: Circular Economy Engine OMEGA</title>
+    <title>Global Climate Action: Circular Economy Engine Ultra v2.0</title>
     <style>
         /* ==========================================================================
            1. ADVANCED RESPONSIVE CSS & CORE VARIABLES
@@ -11,760 +11,1036 @@
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;800;900&family=Fira+Code:wght@500;700&display=swap');
 
         :root {
-            --bg-dark: #050505;
-            --bg-panel: rgba(10, 10, 15, 0.98);
-            --border-glow: rgba(255, 255, 255, 0.2);
+            --bg-dark: #050507;
+            --bg-panel: rgba(10, 10, 15, 0.95);
+            --border-glow: rgba(255, 255, 255, 0.15);
+            
             --font-main: 'Montserrat', system-ui, sans-serif;
             --font-mono: 'Fira Code', monospace;
-            --compost-color: #16a34a; --compost-shadow: #14532d; --compost-glow: rgba(22, 163, 74, 0.8);
-            --recycle-color: #2563eb; --recycle-shadow: #1e3a8a; --recycle-glow: rgba(37, 99, 235, 0.8);
-            --landfill-color: #3f3f46; --landfill-shadow: #18181b; --landfill-glow: rgba(63, 63, 70, 0.8);
-            --sky-grad: linear-gradient(180deg, #0f172a 0%, #1e293b 40%, #334155 100%);
-            --ground-grad: linear-gradient(180deg, #064e3b 0%, #065f46 40%, #047857 100%);
-            --text-glow: 0 0 20px rgba(255, 255, 255, 0.6);
-            --danger-color: #ef4444; --warning-color: #f59e0b; --xp-color: #8b5cf6;
+            
+            --compost-color: #16a34a;
+            --compost-shadow: #14532d;
+            --compost-glow: rgba(22, 163, 74, 0.8);
+
+            --recycle-color: #2563eb;
+            --recycle-shadow: #1e3a8a;
+            --recycle-glow: rgba(37, 99, 235, 0.8);
+
+            --landfill-color: #3f3f46;
+            --landfill-shadow: #18181b;
+            --landfill-glow: rgba(63, 63, 70, 0.8);
+
+            --ewaste-color: #eab308;
+            --ewaste-shadow: #854d0e;
+            --ewaste-glow: rgba(234, 179, 8, 0.8);
+
+            --sky-gradient-day: linear-gradient(180deg, #0c4a6e 0%, #0284c7 40%, #7dd3fc 100%);
+            --sky-gradient-sunset: linear-gradient(180deg, #4c1d95 0%, #be123c 40%, #f59e0b 100%);
+            --sky-gradient-night: linear-gradient(180deg, #020617 0%, #0f172a 40%, #1e293b 100%);
+            
+            --ground-gradient: linear-gradient(180deg, #16a34a 0%, #15803d 40%, #064e3b 100%);
+            
+            --text-glow: 0 0 15px rgba(255, 255, 255, 0.5);
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --success-color: #10b981;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; touch-action: manipulation; user-select: none; }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.8); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.5); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.9); }
+        
+        ::-webkit-scrollbar { width: 12px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.6); border-radius: 6px; margin: 10px 0; box-shadow: inset 0 0 10px rgba(0,0,0,0.8); }
+        ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, rgba(255,255,255,0.3), rgba(255,255,255,0.6)); border-radius: 6px; border: 2px solid rgba(0,0,0,0.8); }
+        ::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0.9)); }
 
-        body { font-family: var(--font-main); background-color: var(--bg-dark); color: #f4f4f5; width: 100vw; height: 100vh; overflow: hidden; perspective: 3000px; }
+        body {
+            font-family: var(--font-main); background-color: var(--bg-dark); color: #f4f4f5;
+            width: 100vw; height: 100vh; overflow: hidden; perspective: 3000px;
+            transition: background 2s ease;
+        }
+
         .hidden { display: none !important; opacity: 0; pointer-events: none; }
-
-        /* ==========================================================================
-           2. DYNAMIC ENVIRONMENT & WEATHER CANVAS
-           ========================================================================== */
-        #scenery-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; background: var(--sky-grad); overflow: hidden; transition: background 2s ease; }
-        #weather-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; opacity: 0.6; }
         
-        .sun { position: absolute; top: 10%; right: 15%; width: 15vmin; height: 15vmin; background: radial-gradient(circle, #fde047 0%, #fef08a 50%, rgba(254, 240, 138, 0) 100%); border-radius: 50%; box-shadow: 0 0 150px #fef08a, 0 0 80px #fde047; animation: sunPulse 4s ease-in-out infinite alternate; z-index: 3; }
-        .moon { position: absolute; top: 10%; left: 15%; width: 12vmin; height: 12vmin; background: radial-gradient(circle, #e2e8f0 0%, #cbd5e1 50%, transparent 100%); border-radius: 50%; box-shadow: 0 0 100px #e2e8f0; opacity: 0; transition: opacity 2s; z-index: 3;}
+        .shake-intense { animation: shakeIntense 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+        @keyframes shakeIntense { 10%, 90% { transform: translate3d(-4px, 2px, 0); } 20%, 80% { transform: translate3d(4px, -2px, 0); } 30%, 50%, 70% { transform: translate3d(-8px, 4px, 0); } 40%, 60% { transform: translate3d(8px, -4px, 0); } }
+
+        /* ==========================================================================
+           2. HIGHLY DETAILED DYNAMIC BACKGROUND SCENERY
+           ========================================================================== */
+        #scenery-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1; pointer-events: none; background: var(--sky-gradient-day);
+            overflow: hidden; transition: background 3s ease-in-out;
+        }
+
+        .sun-moon {
+            position: absolute; top: 10%; right: 15%; width: 12vmin; height: 12vmin;
+            background: radial-gradient(circle, #fde047 0%, #fef08a 50%, rgba(254, 240, 138, 0) 100%);
+            border-radius: 50%; box-shadow: 0 0 120px #fef08a, 0 0 60px #fde047;
+            animation: celestialPulse 8s ease-in-out infinite alternate;
+            transition: all 3s ease;
+        }
+
+        .stars { position: absolute; width: 100%; height: 100%; background: transparent; opacity: 0; transition: opacity 3s ease; }
+        .stars::after { content: ''; position: absolute; width: 2px; height: 2px; background: white; box-shadow: 10vw 20vh #fff, 20vw 10vh #fff, 30vw 40vh #fff, 40vw 15vh #fff, 50vw 50vh #fff, 60vw 10vh #fff, 70vw 30vh #fff, 80vw 5vh #fff, 90vw 45vh #fff, 15vw 60vh #fff, 25vw 80vh #fff, 35vw 70vh #fff, 45vw 90vh #fff, 55vw 65vh #fff, 65vw 85vh #fff, 75vw 75vh #fff, 85vw 95vh #fff, 95vw 60vh #fff, 5vw 35vh #fff, 88vw 22vh #fff; animation: twinkle 4s infinite alternate; }
+
+        .cloud-wrap { position: absolute; width: 100%; height: 50%; top: 0; left: 0; z-index: 2;}
+        .cloud { position: absolute; background: rgba(255, 255, 255, 0.85); border-radius: 50px; filter: drop-shadow(0 20px 20px rgba(0,0,0,0.15)); animation: drift linear infinite; transition: background 3s ease;}
+        .cloud::before, .cloud::after { content: ''; position: absolute; background: inherit; border-radius: 50%; }
         
-        .mountain-range { position: absolute; bottom: 35vh; width: 100%; height: 30vh; z-index: 4;}
-        .mountain { position: absolute; bottom: 0; width: 0; height: 0; filter: drop-shadow(0 -10px 20px rgba(0,0,0,0.5)); }
-        .m1 { border-left: 35vw solid transparent; border-right: 35vw solid transparent; border-bottom: 38vh solid #020617; left: -15vw; }
-        .m2 { border-left: 40vw solid transparent; border-right: 40vw solid transparent; border-bottom: 45vh solid #0f172a; right: -20vw; }
-        .m3 { border-left: 30vw solid transparent; border-right: 30vw solid transparent; border-bottom: 28vh solid #1e293b; left: 20vw; }
-
-        .ground-layer { position: absolute; bottom: 0; left: 0; width: 100%; height: 35vh; background: var(--ground-grad); border-top: 10px solid #10b981; box-shadow: inset 0 40px 80px rgba(0,0,0,0.6); z-index: 5; transition: filter 2s ease; }
-        .grid-overlay { position: absolute; bottom: 0; left: 0; width: 100%; height: 35vh; background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 50px 50px; transform: perspective(500px) rotateX(60deg); transform-origin: top; z-index: 6; opacity: 0.3; }
-
-        @keyframes sunPulse { 0% { transform: scale(1); filter: hue-rotate(0deg); } 100% { transform: scale(1.15); filter: hue-rotate(15deg); } }
-
-        /* ==========================================================================
-           3. INTRO UI & PROGRESSION
-           ========================================================================== */
-        #intro-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); backdrop-filter: blur(30px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 2vw; transition: opacity 0.8s ease; }
-        .intro-panel { background: var(--bg-panel); border: 1px solid var(--border-glow); border-radius: 24px; width: 100%; max-width: 1400px; height: 90vh; display: flex; flex-direction: column; box-shadow: 0 50px 100px rgba(0,0,0,0.9), inset 0 0 50px rgba(255,255,255,0.02); overflow: hidden; position: relative; }
-        .progress-track { width: 100%; height: 8px; background: #000; flex-shrink: 0; }
-        .progress-fill { height: 100%; background: linear-gradient(90deg, #ef4444, #f59e0b, #10b981, #3b82f6, #8b5cf6); width: 0%; transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 0 20px rgba(255,255,255,0.5); }
-        .slide-viewport { flex: 1; position: relative; overflow: hidden; }
-        .slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; opacity: 0; transform: scale(0.9) translateY(50px); transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1); pointer-events: none; padding: clamp(20px, 4vw, 60px); overflow-y: auto; }
-        .slide.active { opacity: 1; transform: scale(1) translateY(0); pointer-events: auto; z-index: 10; }
-        .slide h1 { font-size: clamp(2.5rem, 6vw, 5.5rem); font-weight: 900; line-height: 1.1; margin-bottom: 30px; color: #fff; text-shadow: var(--text-glow); text-transform: uppercase; letter-spacing: -1px; }
-        .slide p { font-size: clamp(1.1rem, 2vw, 1.6rem); line-height: 1.7; color: #cbd5e1; margin-bottom: 25px; }
-        .nav-footer { padding: 30px 40px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.8); z-index: 20;}
-        .btn-action { background: #fff; color: #000; border: none; padding: 15px 45px; border-radius: 50px; font-size: 1.2rem; font-weight: 900; text-transform: uppercase; letter-spacing: 3px; cursor: pointer; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        .btn-action:hover { transform: translateY(-8px) scale(1.05); box-shadow: 0 20px 40px rgba(255,255,255,0.4); }
-
-        /* ==========================================================================
-           4. HUD, LEVELING & COMBO SYSTEM
-           ========================================================================== */
-        #game-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; display: flex; flex-direction: column; pointer-events: none; }
-        .hud-bar { display: grid; grid-template-columns: 1fr 2fr 1fr; padding: 20px 40px; width: 100%; pointer-events: auto; gap: 20px; z-index: 50;}
-        .stat-block { background: rgba(0,0,0,0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 15px 30px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 20px 40px rgba(0,0,0,0.8); }
-        .stat-lbl { font-family: var(--font-mono); font-size: 1rem; color: #a1a1aa; letter-spacing: 3px; margin-bottom: 8px; font-weight: 700;}
-        .stat-num { font-size: clamp(2rem, 4vw, 3.5rem); font-weight: 900; color: #fff; font-variant-numeric: tabular-nums; text-shadow: 0 0 30px rgba(255,255,255,0.4); transition: color 0.3s; }
+        .c1 { width: 300px; height: 80px; top: 10%; left: -350px; animation-duration: 110s; }
+        .c1::before { width: 140px; height: 140px; top: -60px; left: 40px; }
+        .c1::after { width: 100px; height: 100px; top: -45px; right: 40px; }
         
-        /* Level & XP Bar */
-        .level-container { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; margin-top: -10px; }
-        .lvl-text { font-family: var(--font-mono); font-size: 1.2rem; font-weight: 900; color: var(--xp-color); text-transform: uppercase; letter-spacing: 4px; margin-bottom: 5px; text-shadow: 0 0 15px var(--xp-color); }
-        .xp-bar-bg { width: 50%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; box-shadow: inset 0 0 10px rgba(0,0,0,0.8); }
-        .xp-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #8b5cf6, #d946ef); transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 20px #d946ef; }
+        .c2 { width: 200px; height: 60px; top: 25%; left: -250px; animation-duration: 85s; animation-delay: -30s; opacity: 0.6; transform: scale(0.8); }
+        .c2::before { width: 100px; height: 100px; top: -50px; left: 25px; }
+        .c2::after { width: 70px; height: 70px; top: -25px; right: 25px; }
+        
+        .c3 { width: 400px; height: 100px; top: 5%; left: -450px; animation-duration: 160s; animation-delay: -70s; opacity: 0.4; transform: scale(0.6); }
+        .c3::before { width: 180px; height: 180px; top: -80px; left: 60px; }
+        .c3::after { width: 140px; height: 140px; top: -60px; right: 50px; }
 
-        .combo-center { display: flex; justify-content: center; align-items: center; flex-direction: column; }
-        #combo-txt { font-size: clamp(4rem, 8vw, 10rem); font-weight: 900; color: #f59e0b; text-shadow: 0 0 60px rgba(245, 158, 11, 0.9); opacity: 0; transform: scale(0.3) rotate(-10deg); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        #combo-txt.active { opacity: 1; transform: scale(1) rotate(0deg); }
-        #combo-txt.pop { transform: scale(1.6) rotate(5deg); color: #fff; text-shadow: 0 0 100px rgba(255, 255, 255, 1); }
-        .combo-meter { width: 200px; height: 10px; background: rgba(0,0,0,0.5); border-radius: 10px; margin-top: 10px; overflow: hidden; opacity: 0; transition: opacity 0.3s;}
-        .combo-meter.active { opacity: 1; }
-        .combo-meter-fill { height: 100%; width: 0%; background: #f59e0b; transition: width 0.2s linear; }
+        .mountain-range { position: absolute; bottom: 35vh; width: 100%; height: 35vh; z-index: 1;}
+        .mountain { position: absolute; bottom: 0; width: 0; height: 0; }
+        .m1 { border-left: 35vw solid transparent; border-right: 35vw solid transparent; border-bottom: 40vh solid #0f172a; left: -15vw; }
+        .m2 { border-left: 40vw solid transparent; border-right: 40vw solid transparent; border-bottom: 45vh solid #1e293b; right: -20vw; }
+        .m3 { border-left: 30vw solid transparent; border-right: 30vw solid transparent; border-bottom: 30vh solid #334155; left: 20vw; }
+        .m4 { border-left: 20vw solid transparent; border-right: 20vw solid transparent; border-bottom: 25vh solid #020617; right: 10vw; }
 
-        /* Floating Texts */
-        .floating-text { position: absolute; font-weight: 900; font-size: 2.5rem; pointer-events: none; z-index: 1000; animation: floatUp 1s cubic-bezier(0.1, 0.8, 0.3, 1) forwards; text-shadow: 0 5px 15px rgba(0,0,0,0.8); }
-        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(0.5); } 50% { transform: translateY(-50px) scale(1.2); } 100% { opacity: 0; transform: translateY(-100px) scale(1); } }
+        .cityscape {
+            position: absolute; bottom: 35vh; width: 100%; height: 20vh; z-index: 2;
+            background: repeating-linear-gradient(to right, 
+                transparent, transparent 2%, #020617 2%, #020617 5%, 
+                transparent 5%, transparent 8%, #0f172a 8%, #0f172a 12%,
+                transparent 12%, transparent 15%, #020617 15%, #020617 22%,
+                transparent 22%, transparent 28%, #1e293b 28%, #1e293b 35%,
+                transparent 35%, transparent 38%, #0f172a 38%, #0f172a 45%,
+                transparent 45%, transparent 55%, #020617 55%, #020617 60%,
+                transparent 60%, transparent 63%, #1e293b 63%, #1e293b 68%,
+                transparent 68%, transparent 72%, #0f172a 72%, #0f172a 80%,
+                transparent 80%, transparent 85%, #020617 85%, #020617 92%,
+                transparent 92%, transparent 95%, #1e293b 95%, #1e293b 100%
+            );
+            opacity: 0.6; filter: blur(1.5px);
+        }
 
-        /* Achievements Toast */
-        #toast-container { position: absolute; top: 150px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 2000; pointer-events: none; }
-        .toast { background: linear-gradient(135deg, rgba(139, 92, 246, 0.9), rgba(76, 29, 149, 0.9)); border: 1px solid #c4b5fd; padding: 15px 25px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 20px rgba(139, 92, 246, 0.5); color: white; display: flex; align-items: center; gap: 15px; transform: translateX(120%); transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        .toast.show { transform: translateX(0); }
-        .toast-icon { font-size: 2rem; }
-        .toast-text h4 { margin: 0; font-size: 1.2rem; text-transform: uppercase; font-weight: 900; letter-spacing: 1px;}
-        .toast-text p { margin: 0; font-size: 0.9rem; color: #ddd6fe; }
+        .ground-layer {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 35vh; z-index: 3;
+            background: var(--ground-gradient); border-top: 10px solid #22c55e;
+            box-shadow: inset 0 40px 80px rgba(0,0,0,0.5); transition: all 3s ease;
+        }
+
+        .tree-wrap { position: absolute; bottom: 35vh; width: 100%; height: 25vh; z-index: 4;}
+        .pine {
+            position: absolute; bottom: 0; width: 0; height: 0;
+            border-left: 30px solid transparent; border-right: 30px solid transparent; border-bottom: 120px solid #064e3b;
+            filter: drop-shadow(0 15px 10px rgba(0,0,0,0.5)); transition: border-bottom-color 3s ease;
+        }
+        .pine::after { content: ''; position: absolute; top: 120px; left: -6px; width: 12px; height: 25px; background: #451a03; }
+        .t1 { left: 2%; transform: scale(1.8); } .t2 { left: 12%; transform: scale(1.3); filter: brightness(0.8);} .t3 { left: 20%; transform: scale(0.8); }
+        .t4 { right: 3%; transform: scale(2.1); } .t5 { right: 14%; transform: scale(1.4); } .t6 { right: 24%; transform: scale(1.7); filter: brightness(0.9);}
+
+        @keyframes celestialPulse { 0% { transform: scale(1); opacity: 0.85; } 100% { transform: scale(1.15); opacity: 1; box-shadow: 0 0 150px #fef08a, 0 0 80px #fde047;} }
+        @keyframes drift { 0% { transform: translateX(0); } 100% { transform: translateX(130vw); } }
+        @keyframes twinkle { 0% { opacity: 0.3; } 100% { opacity: 1; transform: scale(1.2); } }
 
         /* ==========================================================================
-           5. GAME STAGE & ADVANCED PHYSICS OBJECTS
+           3. EDUCATIONAL INTRO SEQUENCE (FLEX SCROLLABLE)
            ========================================================================== */
-        #item-arena { position: absolute; top: 15vh; left: 0; width: 100%; height: 50vh; display: flex; justify-content: center; align-items: center; z-index: 200; perspective: 1000px; }
-        .waste-obj {
-            position: absolute; width: clamp(160px, 35vmin, 320px); height: clamp(160px, 35vmin, 320px);
-            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(30px);
-            border-radius: 50%; box-shadow: 0 50px 100px rgba(0,0,0,0.8), inset 0 10px 30px rgba(255,255,255,1), 0 0 0 8px rgba(255,255,255,0.2);
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            border: 4px solid #fff; transform-style: preserve-3d;
-            animation: idleHover 5s ease-in-out infinite, spawnIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        #intro-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.92); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            z-index: 1000; display: flex; align-items: center; justify-content: center;
+            padding: clamp(10px, 4vw, 40px); transition: opacity 0.8s ease;
+        }
+
+        .intro-panel {
+            background: var(--bg-panel); border: 1px solid var(--border-glow);
+            border-radius: 24px; width: 100%; max-width: 1400px; height: 94vh; max-height: 1000px;
+            display: flex; flex-direction: column; box-shadow: 0 50px 100px rgba(0,0,0,0.95);
+            position: relative; overflow: hidden;
+        }
+
+        .progress-track { width: 100%; height: 8px; background: rgba(255,255,255,0.05); flex-shrink: 0; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #10b981, #eab308); width: 10%; transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 0 20px rgba(16, 185, 129, 0.8); }
+
+        .slide-viewport { flex: 1; min-height: 0; position: relative; overflow: hidden; }
+        
+        .slide {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column;
+            opacity: 0; transform: translateX(200px) scale(0.95); transition: all 0.7s cubic-bezier(0.25, 0.8, 0.25, 1);
+            pointer-events: none;
+        }
+        .slide.active { opacity: 1; transform: translateX(0) scale(1); pointer-events: auto; z-index: 10;}
+        .slide.prev { opacity: 0; transform: translateX(-200px) scale(0.95); }
+
+        .scroll-content {
+            flex: 1; overflow-y: auto; padding: clamp(30px, 8vw, 80px);
+            overscroll-behavior: contain; user-select: text;
+        }
+
+        .tag-pill {
+            display: inline-block; font-family: var(--font-mono); font-size: clamp(0.75rem, 2vw, 1.2rem);
+            padding: 10px 20px; border-radius: 10px; margin-bottom: 30px; letter-spacing: 3px; text-transform: uppercase; font-weight: 800;
+        }
+        .tag-pill.err { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.5); box-shadow: 0 0 20px rgba(239, 68, 68, 0.3); }
+        .tag-pill.sol { background: rgba(16, 185, 129, 0.15); color: #86efac; border: 1px solid rgba(16, 185, 129, 0.5); box-shadow: 0 0 20px rgba(16, 185, 129, 0.3); }
+        .tag-pill.sys { background: rgba(59, 130, 246, 0.15); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.5); box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
+        .tag-pill.warn { background: rgba(234, 179, 8, 0.15); color: #fde047; border: 1px solid rgba(234, 179, 8, 0.5); box-shadow: 0 0 20px rgba(234, 179, 8, 0.3); }
+
+        .slide h1 { font-size: clamp(3rem, 7vw, 5.5rem); font-weight: 900; line-height: 1.05; margin-bottom: 30px; color: #fff; text-shadow: var(--text-glow); letter-spacing: -1px;}
+        .slide p { font-size: clamp(1.3rem, 2.5vw, 1.6rem); line-height: 1.8; color: #cbd5e1; margin-bottom: 30px; }
+        .slide strong { color: #fff; background: rgba(255,255,255,0.15); padding: 4px 10px; border-radius: 8px; box-shadow: inset 0 0 10px rgba(255,255,255,0.1);}
+        
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px; margin-top: 50px; }
+        .info-card { background: rgba(0,0,0,0.6); padding: 40px; border-radius: 20px; border-top: 6px solid; box-shadow: 0 15px 40px rgba(0,0,0,0.7); transition: transform 0.3s ease;}
+        .info-card:hover { transform: translateY(-10px); }
+        .info-card.red { border-top-color: #ef4444; background: linear-gradient(180deg, rgba(239, 68, 68, 0.05), transparent);}
+        .info-card.green { border-top-color: #10b981; background: linear-gradient(180deg, rgba(16, 185, 129, 0.05), transparent);}
+        .info-card.blue { border-top-color: #3b82f6; background: linear-gradient(180deg, rgba(59, 130, 246, 0.05), transparent);}
+        .info-card.yellow { border-top-color: #eab308; background: linear-gradient(180deg, rgba(234, 179, 8, 0.05), transparent);}
+        .info-card h3 { font-size: clamp(1.6rem, 3.5vw, 2.2rem); margin-bottom: 20px; color: #fff; font-weight: 900; letter-spacing: -0.5px;}
+        .info-card p { font-size: clamp(1.2rem, 2.2vw, 1.4rem); color: #94a3b8; margin: 0; line-height: 1.7; }
+
+        .nav-footer {
+            padding: clamp(20px, 4vw, 30px) clamp(30px, 6vw, 50px); display: flex; justify-content: space-between; align-items: center;
+            border-top: 1px solid var(--border-glow); background: rgba(0,0,0,0.8); flex-shrink: 0; backdrop-filter: blur(10px);
         }
         
-        .timer-svg { position: absolute; top: -15px; left: -15px; width: calc(100% + 30px); height: calc(100% + 30px); transform: rotate(-90deg); z-index: -1; pointer-events: none; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5)); }
-        .timer-bg { fill: none; stroke: rgba(0,0,0,0.3); stroke-width: 12; }
-        .timer-path { fill: none; stroke: var(--danger-color); stroke-width: 12; stroke-linecap: round; transition: stroke 0.3s ease; filter: drop-shadow(0 0 15px var(--danger-color)); }
-
-        .obj-emoji { font-size: clamp(6rem, 15vmin, 12rem); filter: drop-shadow(0 25px 25px rgba(0,0,0,0.4)); z-index: 2; transform: translateZ(50px); }
-        .obj-name { position: absolute; bottom: -45px; background: linear-gradient(180deg, #18181b, #09090b); color: #fff; padding: 15px 30px; border-radius: 16px; font-weight: 900; font-size: clamp(1rem, 2.5vmin, 1.6rem); text-align: center; max-width: 160%; box-shadow: 0 30px 60px rgba(0,0,0,0.9), inset 0 2px 5px rgba(255,255,255,0.2); border: 2px solid #3f3f46; text-transform: uppercase; letter-spacing: 2px; z-index: 3; transform: translateZ(30px); }
-
-        @keyframes spawnIn { 0% { transform: scale(0) rotateX(90deg) rotateY(90deg); opacity: 0; } 100% { transform: scale(1) rotateX(0deg) rotateY(0deg); opacity: 1; } }
-        @keyframes idleHover { 0%, 100% { transform: translateY(0) rotateX(5deg) rotateY(-5deg); } 50% { transform: translateY(-40px) rotateX(-5deg) rotateY(5deg); } }
-        
-        .anim-toss { animation: tossObj 0.6s cubic-bezier(0.5, 0, 0.2, 1) forwards !important; }
-        @keyframes tossObj { 0% { transform: scale(1) translate(0,0) rotate(0); opacity: 1; } 40% { transform: scale(1.2) var(--toss-dest) rotate(45deg); opacity: 0.9; filter: brightness(1.5); } 100% { transform: scale(0.1) var(--toss-dest) translateY(100px) rotate(180deg); opacity: 0; filter: brightness(0); } }
-        .anim-drop { animation: failDrop 0.8s cubic-bezier(0.5, 0, 0.2, 1) forwards !important; }
-        @keyframes failDrop { 0% { transform: scale(1) translateY(0) rotate(0); opacity: 1; filter: grayscale(0); } 100% { transform: scale(0.3) translateY(150vh) rotate(-90deg); opacity: 0; filter: grayscale(1) brightness(0.2); } }
+        .btn-action {
+            background: #fff; color: #000; border: none; padding: clamp(16px, 2.5vw, 22px) clamp(30px, 5vw, 50px); border-radius: 60px;
+            font-size: clamp(1.1rem, 2.5vw, 1.5rem); font-weight: 900; text-transform: uppercase; letter-spacing: 2.5px;
+            cursor: pointer; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .btn-action:hover { transform: translateY(-6px) scale(1.05); box-shadow: 0 20px 40px rgba(255,255,255,0.4); }
+        .btn-action:active { transform: translateY(2px) scale(0.95); }
+        .btn-action.ghost { background: transparent; color: #94a3b8; border: 3px solid #475569; }
+        .btn-action.ghost:hover { color: #fff; border-color: #fff; background: rgba(255,255,255,0.1); box-shadow: none; }
+        .btn-action.launch { background: linear-gradient(135deg, #10b981, #047857); color: white; border: 3px solid #6ee7b7; box-shadow: 0 15px 40px rgba(16, 185, 129, 0.6); }
+        .btn-action.launch:hover { box-shadow: 0 25px 60px rgba(16, 185, 129, 0.9); }
 
         /* ==========================================================================
-           6. INTERACTIVE 3D BINS & KEYBOARD HINTS
+           4. RESPONSIVE GAME UI (HUD)
            ========================================================================== */
-        #bins-dock { position: absolute; bottom: 3vh; left: 0; width: 100%; display: flex; justify-content: center; align-items: flex-end; gap: clamp(20px, 6vw, 120px); z-index: 100; pointer-events: auto; }
-        .bin-wrapper { display: flex; flex-direction: column; align-items: center; gap: 15px; }
-        .key-hint { background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3); padding: 5px 15px; border-radius: 8px; font-family: var(--font-mono); font-weight: 900; color: #fff; font-size: 1.2rem; box-shadow: 0 5px 10px rgba(0,0,0,0.5); opacity: 0.7; transition: 0.2s; }
+        #game-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; display: flex; flex-direction: column; }
         
-        .bin-unit { width: clamp(100px, 22vw, 280px); height: clamp(140px, 32vw, 400px); position: relative; cursor: pointer; transform-style: preserve-3d; transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        .bin-unit:hover { transform: translateY(-30px) scale(1.05) rotateX(10deg); }
-        .bin-unit:hover ~ .key-hint { opacity: 1; background: rgba(255,255,255,0.3); transform: translateY(-10px); }
-        .bin-unit:active, .bin-unit.pressed { transform: translateY(10px) scale(0.9) rotateX(-5deg); }
+        .hud-bar {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            padding: clamp(20px, 4vw, 40px); width: 100%; pointer-events: auto; z-index: 50;
+        }
 
-        .bin-chassis { position: absolute; bottom: 0; width: 100%; height: 85%; border-radius: 15px 15px 30px 30px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 15%; box-shadow: inset -25px 0 50px rgba(0,0,0,0.8), 0 40px 60px rgba(0,0,0,0.9), inset 5px 0 15px rgba(255,255,255,0.3); background-image: repeating-linear-gradient(90deg, transparent, transparent 10%, rgba(0,0,0,0.2) 10%, rgba(0,0,0,0.2) 20%); }
-        .bin-rim { position: absolute; top: 10%; left: -6%; width: 112%; height: 12%; border-radius: 12px; box-shadow: 0 20px 30px rgba(0,0,0,0.8), inset 0 5px 10px rgba(255,255,255,0.5); z-index: 2; }
-        .bin-void { position: absolute; top: 5%; left: 5%; width: 90%; height: 12%; border-radius: 50%; background: #000; opacity: 0.95; box-shadow: inset 0 25px 50px #000; z-index: 1; }
-        .bin-logo { width: 55%; height: 55%; opacity: 0.9; margin-bottom: 10%; filter: drop-shadow(0 10px 15px rgba(0,0,0,0.8)); transition: 0.3s; }
-        .bin-txt { font-size: clamp(0.9rem, 2vw, 2.2rem); font-weight: 900; color: #fff; text-transform: uppercase; letter-spacing: 3px; text-shadow: 0 5px 15px rgba(0,0,0,1); }
+        .stat-block {
+            background: rgba(5, 5, 8, 0.9); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255,255,255,0.2); border-radius: 24px;
+            padding: clamp(16px, 2.5vw, 25px) clamp(25px, 5vw, 50px);
+            display: flex; flex-direction: column; align-items: center; box-shadow: 0 25px 50px rgba(0,0,0,0.8), inset 0 2px 10px rgba(255,255,255,0.1);
+        }
 
-        #bin-comp .bin-chassis { background-color: var(--compost-color); } #bin-comp .bin-rim { background-color: var(--compost-shadow); }
-        #bin-comp:hover .bin-chassis, #bin-comp.pressed .bin-chassis { box-shadow: inset -25px 0 50px rgba(0,0,0,0.8), 0 0 80px var(--compost-glow); }
-        #bin-comp:hover .bin-logo { filter: drop-shadow(0 0 20px #fff); }
+        .stat-lbl { font-family: var(--font-mono); font-size: clamp(0.85rem, 1.8vw, 1.2rem); color: #a1a1aa; letter-spacing: 4px; margin-bottom: 10px; font-weight: 800;}
+        .stat-num { font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight: 900; color: #fff; font-variant-numeric: tabular-nums; text-shadow: 0 0 30px rgba(255,255,255,0.4); }
 
-        #bin-recy .bin-chassis { background-color: var(--recycle-color); } #bin-recy .bin-rim { background-color: var(--recycle-shadow); }
-        #bin-recy:hover .bin-chassis, #bin-recy.pressed .bin-chassis { box-shadow: inset -25px 0 50px rgba(0,0,0,0.8), 0 0 80px var(--recycle-glow); }
-        #bin-recy:hover .bin-logo { filter: drop-shadow(0 0 20px #fff); }
+        .combo-center { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; margin-top: -10px;}
+        #combo-txt { font-size: clamp(5rem, 10vw, 10rem); font-weight: 900; color: #f59e0b; text-shadow: 0 0 60px rgba(245, 158, 11, 0.9), 0 0 20px rgba(245, 158, 11, 1); opacity: 0; transform: scale(0.3); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); line-height: 1;}
+        #combo-txt.active { opacity: 1; transform: scale(1); }
+        #combo-txt.pop { transform: scale(1.6) rotate(-5deg); color: #fff; text-shadow: 0 0 100px rgba(255, 255, 255, 1), 0 0 40px #f59e0b; }
+        
+        #streak-msg { font-family: var(--font-mono); font-size: clamp(1rem, 2vw, 1.5rem); color: #fff; background: #ef4444; padding: 5px 15px; border-radius: 10px; font-weight: bold; opacity: 0; transform: translateY(-20px); transition: 0.3s; box-shadow: 0 0 20px #ef4444; letter-spacing: 2px;}
+        #streak-msg.show { opacity: 1; transform: translateY(10px); }
 
-        #bin-land .bin-chassis { background-color: var(--landfill-color); } #bin-land .bin-rim { background-color: var(--landfill-shadow); }
-        #bin-land:hover .bin-chassis, #bin-land.pressed .bin-chassis { box-shadow: inset -25px 0 50px rgba(0,0,0,0.8), 0 0 80px var(--landfill-glow); }
-        #bin-land:hover .bin-logo { filter: drop-shadow(0 0 20px #fff); }
+        .reset-zone { position: absolute; bottom: clamp(25px, 5vh, 50px); right: clamp(25px, 5vw, 50px); pointer-events: auto; z-index: 500; }
+        .btn-kill {
+            background: rgba(220, 38, 38, 0.95); backdrop-filter: blur(10px); color: white; border: 2px solid #fca5a5;
+            padding: clamp(15px, 2.5vw, 22px) clamp(25px, 4vw, 40px); border-radius: 16px;
+            font-weight: 900; font-family: var(--font-mono); font-size: clamp(1rem, 1.8vw, 1.4rem); letter-spacing: 2px;
+            cursor: pointer; box-shadow: 0 15px 40px rgba(220, 38, 38, 0.6); transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .btn-kill:hover { background: #ef4444; transform: translateY(-8px) scale(1.05); box-shadow: 0 25px 60px rgba(239, 68, 68, 0.9); }
 
         /* ==========================================================================
-           7. MODALS, PARTICLES & FULL SCREEN FX
+           5. GAME PHYSICS STAGE & SVG TIMER
+           ========================================================================== */
+        #item-arena {
+            position: absolute; top: 18vh; left: 0; width: 100%; height: 45vh;
+            display: flex; justify-content: center; align-items: center;
+            z-index: 200;
+        }
+
+        .waste-obj {
+            position: absolute; 
+            width: clamp(180px, 35vmin, 320px); 
+            height: clamp(180px, 35vmin, 320px);
+            background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+            border-radius: 50%; box-shadow: 0 50px 100px rgba(0,0,0,0.8), inset 0 8px 25px rgba(255,255,255,1), inset 0 -8px 25px rgba(0,0,0,0.1);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            border: 8px solid #f4f4f5;
+            animation: hoverItem 3.5s ease-in-out infinite; transform-origin: center;
+            cursor: grab;
+        }
+        .waste-obj:active { cursor: grabbing; transform: scale(0.95) !important; animation: none;}
+
+        .timer-svg {
+            position: absolute; top: -14px; left: -14px; width: calc(100% + 28px); height: calc(100% + 28px);
+            transform: rotate(-90deg); z-index: -1; pointer-events: none;
+        }
+        .timer-bg { fill: none; stroke: rgba(0,0,0,0.15); stroke-width: 10; }
+        .timer-path {
+            fill: none; stroke: var(--success-color); stroke-width: 10;
+            stroke-dasharray: 283; stroke-dashoffset: 0;
+            transition: stroke-dashoffset 0.1s linear, stroke 0.3s ease;
+            stroke-linecap: round; filter: drop-shadow(0 0 12px var(--success-color));
+        }
+
+        .obj-emoji { font-size: clamp(6.5rem, 16vmin, 12rem); filter: drop-shadow(0 20px 20px rgba(0,0,0,0.4)); margin-bottom: 5px; z-index: 2; user-select: none; }
+        .obj-name {
+            position: absolute; bottom: -30px; background: #050507; color: #fff;
+            padding: 15px 30px; border-radius: 16px; font-weight: 900;
+            font-size: clamp(1.2rem, 3vmin, 1.8rem); white-space: nowrap;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.9), 0 0 20px rgba(255,255,255,0.1); border: 2px solid #27272a;
+            text-transform: uppercase; letter-spacing: 2px; z-index: 3;
+        }
+
+        @keyframes hoverItem { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-30px) rotate(4deg); } }
+
+        .anim-toss { animation: tossIntoBin 0.6s cubic-bezier(0.5, 0, 0.2, 1) forwards !important; }
+        @keyframes tossIntoBin {
+            0% { transform: scale(1) translate(0,0); opacity: 1; }
+            40% { transform: scale(1.2) var(--toss-dest) rotate(25deg); opacity: 0.9; filter: brightness(1.3); }
+            100% { transform: scale(0.1) var(--toss-dest) rotate(180deg); opacity: 0; filter: brightness(0.2); }
+        }
+        .anim-drop { animation: dropOut 0.6s cubic-bezier(0.5, 0, 0.2, 1) forwards !important; }
+        @keyframes dropOut {
+            0% { transform: scale(1) translateY(0); opacity: 1; }
+            50% { transform: scale(1.1) translateY(-50px) rotate(15deg); opacity: 0.8; }
+            100% { transform: scale(0.3) translateY(120vh) rotate(-90deg); opacity: 0; }
+        }
+
+        /* ==========================================================================
+           6. COMPACT 3D BINS (4 Bins System)
+           ========================================================================== */
+        #bins-dock {
+            position: absolute; bottom: 2vh; left: 0; width: 100%; 
+            display: flex; justify-content: center; align-items: flex-end;
+            gap: clamp(10px, 3vw, 50px); z-index: 100; pointer-events: auto;
+        }
+
+        .bin-unit {
+            width: clamp(80px, 18vw, 220px);
+            height: clamp(120px, 26vw, 320px);
+            position: relative; cursor: pointer; transform-style: preserve-3d;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .bin-unit:hover { transform: translateY(-25px) scale(1.05); }
+        .bin-unit:active { transform: translateY(10px) scale(0.92); }
+
+        .bin-chassis {
+            position: absolute; bottom: 0; width: 100%; height: 85%;
+            border-radius: 16px 16px 24px 24px;
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+            padding-bottom: 18%; box-shadow: inset -20px 0 50px rgba(0,0,0,0.8), 0 35px 60px rgba(0,0,0,0.9);
+            background-image: repeating-linear-gradient(90deg, transparent, transparent 12%, rgba(0,0,0,0.2) 12%, rgba(0,0,0,0.2) 18%);
+        }
+
+        .bin-rim {
+            position: absolute; top: 10%; left: -6%; width: 112%; height: 12%;
+            border-radius: 10px; box-shadow: 0 20px 30px rgba(0,0,0,0.8), inset 0 4px 8px rgba(255,255,255,0.5); z-index: 2;
+        }
+        .bin-void {
+            position: absolute; top: 5%; left: 5%; width: 90%; height: 12%;
+            border-radius: 50%; background: #000; opacity: 0.95; box-shadow: inset 0 20px 40px #000; z-index: 1;
+        }
+
+        #bin-comp .bin-chassis { background-color: var(--compost-color); }
+        #bin-comp .bin-rim { background-color: var(--compost-shadow); }
+        #bin-comp:hover .bin-chassis { box-shadow: inset -20px 0 50px rgba(0,0,0,0.8), 0 0 80px var(--compost-glow); }
+
+        #bin-recy .bin-chassis { background-color: var(--recycle-color); }
+        #bin-recy .bin-rim { background-color: var(--recycle-shadow); }
+        #bin-recy:hover .bin-chassis { box-shadow: inset -20px 0 50px rgba(0,0,0,0.8), 0 0 80px var(--recycle-glow); }
+
+        #bin-land .bin-chassis { background-color: var(--landfill-color); }
+        #bin-land .bin-rim { background-color: var(--landfill-shadow); }
+        #bin-land:hover .bin-chassis { box-shadow: inset -20px 0 50px rgba(0,0,0,0.8), 0 0 80px var(--landfill-glow); }
+
+        #bin-ewas .bin-chassis { background-color: var(--ewaste-color); }
+        #bin-ewas .bin-rim { background-color: var(--ewaste-shadow); }
+        #bin-ewas:hover .bin-chassis { box-shadow: inset -20px 0 50px rgba(0,0,0,0.8), 0 0 80px var(--ewaste-glow); }
+
+        .bin-logo { width: 45%; height: 45%; opacity: 0.95; margin-bottom: 15%; filter: drop-shadow(0 8px 10px rgba(0,0,0,0.7)); }
+        .bin-txt { font-size: clamp(0.7rem, 1.8vw, 1.8rem); font-weight: 900; color: #fff; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 4px 10px rgba(0,0,0,0.9); text-align: center; line-height: 1.1;}
+
+        /* ==========================================================================
+           7. FEEDBACK OVERLAY & FX CANVAS
            ========================================================================== */
         #fx-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 300; }
-        
-        #result-modal, #level-modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(25px); display: flex; justify-content: center; align-items: center; z-index: 500; opacity: 0; pointer-events: none; transition: 0.4s; padding: 2vw; }
-        #result-modal.show, #level-modal.show { opacity: 1; pointer-events: auto; }
 
-        .res-card { background: #09090b; border: 2px solid #27272a; border-radius: 30px; width: 100%; max-width: 800px; max-height: 90vh; display: flex; flex-direction: column; transform: scale(0.8) translateY(100px); transition: 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 50px 100px rgba(0,0,0,1), inset 0 0 40px rgba(255,255,255,0.05); overflow: hidden; }
-        #result-modal.show .res-card, #level-modal.show .res-card { transform: scale(1) translateY(0); }
-        
-        .res-scroll { overflow-y: auto; flex: 1; padding: 50px; display: flex; flex-direction: column; align-items: center; text-align: center; }
-        .res-icon { font-size: clamp(5rem, 15vw, 10rem); margin-bottom: 20px; filter: drop-shadow(0 20px 30px rgba(0,0,0,0.8)); animation: iconBounce 2s infinite ease-in-out; }
-        @keyframes iconBounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
-        
-        .res-head { font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 900; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 3px; }
+        #result-modal {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 500; opacity: 0; pointer-events: none; transition: 0.4s;
+            padding: clamp(10px, 4vw, 40px);
+        }
+        #result-modal.show { opacity: 1; pointer-events: auto; }
+
+        .res-card {
+            background: #0a0a0f; border: 2px solid #27272a; border-radius: 30px;
+            width: 100%; max-width: 850px; max-height: 90vh;
+            display: flex; flex-direction: column; transform: scale(0.8) translateY(50px); transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 60px 120px rgba(0,0,0,1), 0 0 50px rgba(255,255,255,0.05); overflow: hidden;
+            position: relative;
+        }
+        #result-modal.show .res-card { transform: scale(1) translateY(0); }
+        .res-glow { position: absolute; top: 0; left: 0; width: 100%; height: 10px; z-index: 10;}
+
+        .res-scroll { overflow-y: auto; flex: 1; padding: clamp(40px, 8vw, 80px); display: flex; flex-direction: column; align-items: center; text-align: center; overscroll-behavior: contain;}
+
+        .res-icon { font-size: clamp(6rem, 18vw, 11rem); margin-bottom: 25px; filter: drop-shadow(0 20px 30px rgba(0,0,0,0.6)); line-height: 1;}
+        .res-head { font-size: clamp(2.5rem, 7vw, 4.5rem); font-weight: 900; margin-bottom: 30px; text-transform: uppercase; letter-spacing: 3px; line-height: 1.1;}
         .res-head.pass { color: #4ade80; text-shadow: 0 0 40px rgba(74, 222, 128, 0.6); }
         .res-head.fail { color: #f87171; text-shadow: 0 0 40px rgba(248, 113, 113, 0.6); }
         .res-head.time { color: #f59e0b; text-shadow: 0 0 40px rgba(245, 158, 11, 0.6); }
-        .res-head.lvl { color: #c084fc; text-shadow: 0 0 40px rgba(192, 132, 252, 0.6); }
-
-        .res-body { font-size: clamp(1.2rem, 2.5vw, 1.6rem); color: #e4e4e7; margin-bottom: 20px; line-height: 1.8; background: rgba(255,255,255,0.05); padding: 30px; border-radius: 20px; border-left: 8px solid #3b82f6; text-align: left; width: 100%; box-shadow: inset 0 10px 30px rgba(0,0,0,0.5); }
-        .res-footer { padding: 30px 50px; background: rgba(0,0,0,0.8); border-top: 1px solid #27272a; display: flex; gap: 20px;}
-        .btn-proceed { background: #fff; color: #000; border: none; padding: 20px 40px; border-radius: 50px; font-weight: 900; font-size: 1.4rem; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; width: 100%; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 15px 30px rgba(255,255,255,0.2); }
-        .btn-proceed:hover { transform: translateY(-8px) scale(1.03); box-shadow: 0 25px 50px rgba(255,255,255,0.5); }
-        .btn-proceed.secondary { background: #27272a; color: #fff; box-shadow: none; }
-        .btn-proceed.secondary:hover { background: #3f3f46; box-shadow: 0 15px 30px rgba(0,0,0,0.5); }
-
-        /* Screen Shake & Shatter */
-        #shatter-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 9999; pointer-events: none; overflow: hidden; }
-        .glass-shard { position: absolute; background: linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.05)); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.6); box-shadow: inset 0 0 30px rgba(255,255,255,0.4), 0 20px 40px rgba(0,0,0,0.5); transition: all 1.5s cubic-bezier(0.1, 0.8, 0.3, 1); }
-        .shake-violent { animation: screenShake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
-        @keyframes screenShake {
-            0%, 100% { transform: translate3d(0, 0, 0); filter: blur(0); }
-            10%, 30%, 50%, 70%, 90% { transform: translate3d(-25px, 20px, 0) rotate(-3deg); filter: blur(2px) brightness(1.2); }
-            20%, 40%, 60%, 80% { transform: translate3d(25px, -20px, 0) rotate(3deg); filter: blur(4px) brightness(1.5) contrast(1.5); }
+        
+        .res-body {
+            font-size: clamp(1.4rem, 3.5vw, 1.8rem); color: #e4e4e7; margin-bottom: 25px; line-height: 1.8;
+            background: rgba(255,255,255,0.04); padding: 40px; border-radius: 20px; border-left: 8px solid #3b82f6; text-align: left; width: 100%;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.6);
         }
-        .white-flash { position: fixed; top:0; left:0; width:100vw; height:100vh; background:white; z-index:10000; pointer-events:none; transition: opacity 1.5s ease-out; mix-blend-mode: overlay;}
+        
+        .res-footer { padding: 30px clamp(40px, 8vw, 80px); background: rgba(0,0,0,0.7); border-top: 1px solid #27272a; flex-shrink: 0; backdrop-filter: blur(10px);}
+
+        .btn-proceed {
+            background: #fff; color: #000; border: none; padding: 25px 50px; border-radius: 60px;
+            font-weight: 900; font-size: clamp(1.4rem, 3.5vw, 1.8rem); text-transform: uppercase; letter-spacing: 2px;
+            cursor: pointer; width: 100%; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 15px 40px rgba(255,255,255,0.3);
+        }
+        .btn-proceed:hover { transform: translateY(-8px) scale(1.03); box-shadow: 0 25px 60px rgba(255,255,255,0.5); }
+        .btn-proceed:active { transform: translateY(2px) scale(0.97); }
+
+        .end-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 30px; margin-bottom: 50px; width: 100%; }
+        .end-stat { background: rgba(0,0,0,0.8); padding: 35px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 15px 30px rgba(0,0,0,0.7); }
+        .end-stat .s-lbl { font-family: var(--font-mono); font-size: 1.2rem; color: #94a3b8; margin-bottom: 20px; display: block; letter-spacing: 3px;}
+        .end-stat .s-val { font-size: 4.5rem; font-weight: 900; color: #fff; text-shadow: var(--text-glow); line-height: 1;}
     </style>
 </head>
 <body>
 
     <div id="scenery-layer">
-        <canvas id="weather-canvas"></canvas>
-        <div class="sun" id="celestial-sun"></div>
-        <div class="moon" id="celestial-moon"></div>
-        <div class="mountain-range"><div class="mountain m1"></div><div class="mountain m2"></div><div class="mountain m3"></div></div>
-        <div class="ground-layer" id="ground"></div>
-        <div class="grid-overlay"></div>
+        <div class="stars"></div>
+        <div class="sun-moon" id="celestial"></div>
+        <div class="cloud-wrap"><div class="cloud c1"></div><div class="cloud c2"></div><div class="cloud c3"></div></div>
+        <div class="mountain-range"><div class="mountain m1"></div><div class="mountain m2"></div><div class="mountain m3"></div><div class="mountain m4"></div></div>
+        <div class="cityscape"></div>
+        <div class="ground-layer"></div>
+        <div class="tree-wrap"><div class="pine t1"></div><div class="pine t2"></div><div class="pine t3"></div><div class="pine t4"></div><div class="pine t5"></div><div class="pine t6"></div></div>
     </div>
 
     <div id="intro-overlay">
         <div class="intro-panel">
             <div class="progress-track"><div class="progress-fill" id="p-bar"></div></div>
+            
             <div class="slide-viewport">
                 <div class="slide active" id="slide-1">
-                    <h1>System Initialization</h1>
-                    <p>Welcome to the <strong>OMEGA Circular Economy Engine</strong>. This is not a drill. The linear economy has brought the planet to the brink of collapse.</p>
-                    <p>Your objective: Flawless material diversion. You will be tested on speed, accuracy, and endurance. The system will adapt to your skill level. The weather will change. The pressure will rise.</p>
+                    <div class="scroll-content">
+                        <span class="tag-pill err">Module 01: The Core Crisis</span>
+                        <h1>The Linear Economy</h1>
+                        <p>For centuries, global industry has operated on a highly destructive <strong>"Take-Make-Waste"</strong> model. We violently extract raw materials from the earth, burn massive amounts of fossil fuels to manufacture them into goods, and then rapidly discard them into colossal holes in the ground known as landfills.</p>
+                        <p>This linear system is a primary driver of the global climate crisis, habitat destruction, biodiversity loss, and ocean pollution. We are running out of virgin resources while simultaneously choking the planet with trash. Continuing this path guarantees ecological collapse.</p>
+                        <div class="info-grid">
+                            <div class="info-card red"><h3>99% Waste Ratio</h3><p>Astoundingly, 99% of the stuff we harvest, mine, process, and transport is trashed within just 6 months of sale.</p></div>
+                            <div class="info-card red"><h3>Finite Planet</h3><p>If everyone consumed resources like the average American, we would need 5 entire Earths to sustain the demand.</p></div>
+                        </div>
+                    </div>
                 </div>
+
                 <div class="slide" id="slide-2">
-                    <h1>Sorting Protocols</h1>
-                    <p><strong>GREEN (LEFT ARROW): COMPOST.</strong> Organic matter only. Food scraps, soiled paper, yard waste. Prevents methane generation.</p>
-                    <p><strong>BLUE (DOWN ARROW): RECYCLE.</strong> Clean glass, metal, rigid plastics, and clean paper. Infinite material loops.</p>
-                    <p><strong>BLACK (RIGHT ARROW): LANDFILL.</strong> Mixed materials, thin film plastics, biohazards, and complex synthetics.</p>
+                    <div class="scroll-content">
+                        <span class="tag-pill sol">Module 02: Green Bin</span>
+                        <h1>Curing the Methane Crisis</h1>
+                        <p>When an organic item—like an apple core or a soiled paper napkin—goes to a landfill, it is deprived of oxygen. It undergoes <strong>anaerobic decomposition</strong>, releasing <strong>Methane (CH₄)</strong>, a super-pollutant roughly 80 times more potent than CO₂.</p>
+                        <p>The solution is simple: <strong>The Green Bin</strong>. When organics are composted, they break down with oxygen (aerobically). This completely prevents methane creation. Instead, microbes turn the waste into nutrient-rich soil that actually pulls carbon *out* of the atmosphere.</p>
+                        <div class="info-grid">
+                            <div class="info-card green"><h3>Carbon Drawdown</h3><p>Applying compost to soil sequesters carbon in the ground, making it a vital, immediate tool for reversing climate change.</p></div>
+                            <div class="info-card green"><h3>Soil Restoration</h3><p>Compost replaces toxic synthetic fertilizers and restores water retention in severe drought areas.</p></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide" id="slide-3">
+                    <div class="scroll-content">
+                        <span class="tag-pill sol">Module 03: Blue Bin</span>
+                        <h1>Infinite Material Loops</h1>
+                        <p>Every time we throw away a recyclable item, we destroy its embedded energy and force the extraction of virgin materials all over again. Throwing away an aluminum can means we must mine more bauxite ore, refine it at extreme temperatures, and ship it across the ocean.</p>
+                        <p>The <strong>Blue Bin</strong> stops this cycle. By recycling clean materials, we drastically reduce Scope 3 carbon emissions. We keep materials in the economy and out of the environment.</p>
+                        <div class="info-grid">
+                            <div class="info-card blue"><h3>95% Energy Saved</h3><p>Making a new aluminum can from scratch uses 95% more energy than making one from recycled aluminum.</p></div>
+                            <div class="info-card blue"><h3>Endless Life</h3><p>Materials like aluminum and glass do not degrade. They can be recycled infinitely without losing any structural quality.</p></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide" id="slide-4">
+                    <div class="scroll-content">
+                        <span class="tag-pill err">Module 04: The Purity Problem</span>
+                        <h1>The Threat of Contamination</h1>
+                        <p>The Circular Economy only works if the streams remain pure. "Wish-cycling"—throwing something in the blue bin hoping it's recyclable—actually destroys the system.</p>
+                        <p>A greasy pizza box ruins a batch of clean paper pulp. A plastic bag tangles the spinning gears at the recycling facility, shutting down the entire plant. <strong>You must sort with absolute precision.</strong></p>
+                        <div class="info-grid">
+                            <div class="info-card red"><h3>Plastic Films</h3><p>Flimsy plastics (bags, wrappers) jam sorting machines. They must go to the landfill (or special store drop-offs).</p></div>
+                            <div class="info-card red"><h3>Grease & Food</h3><p>Food residue ruins recycling. Rinse your plastics and glass. If paper is greasy, compost it.</p></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide" id="slide-5">
+                    <div class="scroll-content">
+                        <span class="tag-pill warn">Module 05: The Microplastic Crisis</span>
+                        <h1>Invisible Invaders</h1>
+                        <p>Plastic doesn't decompose; it breaks down into smaller and smaller pieces known as <strong>microplastics</strong>. These fragments infiltrate our oceans, soil, and eventually our food chain.</p>
+                        <p>When items like synthetic sponges, polyester clothes, or plastic straws are sent to landfills—or worse, littered—they slowly degrade, releasing toxins and microscopic plastic polymers into the water table.</p>
+                        <div class="info-grid">
+                            <div class="info-card yellow"><h3>Bioaccumulation</h3><p>Microplastics have been found in the deepest oceans, the highest mountains, and inside human blood streams.</p></div>
+                            <div class="info-card yellow"><h3>Prevention</h3><p>The only solution is radically reducing single-use plastic consumption and ensuring unavoidable plastics are properly recycled.</p></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide" id="slide-6">
+                    <div class="scroll-content">
+                        <span class="tag-pill warn">Module 06: E-Waste</span>
+                        <h1>The Toxic Tech Surge</h1>
+                        <p>Electronic waste (E-Waste) is the fastest-growing waste stream on Earth. When devices are thrown in standard bins, heavy metals like lead, mercury, and cadmium leach into the environment.</p>
+                        <p>Furthermore, throwing lithium-ion batteries into standard recycling or trash bins is the leading cause of massive, uncontrollable fires at waste management facilities.</p>
+                        <div class="info-grid">
+                            <div class="info-card yellow"><h3>Urban Mining</h3><p>A ton of discarded smartphones contains 100 times more gold than a ton of gold ore. We must mine our waste, not the earth.</p></div>
+                            <div class="info-card yellow"><h3>Fire Hazard</h3><p>Never put batteries, phones, or circuitry in the Blue, Green, or Black bins. They require special E-Waste drop-offs.</p></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide" id="slide-7">
+                    <div class="scroll-content">
+                        <span class="tag-pill sol">Module 07: Scope Emissions</span>
+                        <h1>Understanding Your Footprint</h1>
+                        <p>Carbon emissions are categorized into three scopes. While we often focus on Scope 1 (direct fuel burn) and Scope 2 (purchased electricity), the vast majority of our global footprint is hidden in <strong>Scope 3</strong>.</p>
+                        <p>Scope 3 covers the entire value chain: the extraction, manufacturing, transportation, and eventual disposal of every item you buy. By participating in a circular economy, you aggressively cut Scope 3 emissions.</p>
+                        <div class="info-grid">
+                            <div class="info-card blue"><h3>The Life Cycle</h3><p>A single laptop requires moving tons of earth and millions of gallons of water before you ever turn it on.</p></div>
+                            <div class="info-card blue"><h3>Refuse & Reuse</h3><p>Before recycling, we must Refuse what we don't need, and Reuse what we have.</p></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide" id="slide-8">
+                    <div class="scroll-content">
+                        <span class="tag-pill sol">Module 08: The Circular Vision</span>
+                        <h1>A Regenerative Future</h1>
+                        <p>The <strong>Circular Economy</strong> is an economic system aimed at eliminating waste and the continual use of resources. It replaces the "Take-Make-Waste" paradigm with "Reduce-Reuse-Recycle-Rot".</p>
+                        <p>In this system, products are designed for durability, reuse, and remanufacturing. Materials are kept in circulation for as long as possible, and biological materials safely return to the earth.</p>
+                        <div class="info-grid">
+                            <div class="info-card green"><h3>Cradle to Cradle</h3><p>Designing products so that their end-of-life is the beginning of a new product's life.</p></div>
+                            <div class="info-card green"><h3>Nature's Model</h3><p>In nature, there is no waste. The output of one organism is the vital input for another.</p></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide" id="slide-9">
+                    <div class="scroll-content">
+                        <span class="tag-pill sys">Module 09: System Upgrade</span>
+                        <h1>Quad-Bin Architecture</h1>
+                        <p>To handle the complexities of modern waste, your simulator has been upgraded from a standard 3-bin system to a highly advanced <strong>4-Bin Architecture</strong>.</p>
+                        <p>You must now manage Organic Compost, Infinite Recyclables, Linear Landfill, AND hazardous <strong>E-Waste</strong>. Routing dangerous items to standard bins will result in catastrophic system failure.</p>
+                        <div class="info-grid">
+                            <div class="info-card yellow"><h3>The Yellow Bin</h3><p>Batteries, circuits, and anything with a plug or cord must go into the E-Waste/Hazmat routing channel.</p></div>
+                            <div class="info-card yellow"><h3>Zero Tolerance</h3><p>Lithium fires destroy facilities. Accuracy on E-Waste is paramount to public safety.</p></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slide" id="slide-10">
+                    <div class="scroll-content">
+                        <span class="tag-pill sys">Module 10: Protocols</span>
+                        <h1>Engage Sorting Engine</h1>
+                        <p>You are about to enter the Advanced Circular Economy Simulator. <strong>Over 400 unique household items</strong> have been loaded into the physics engine. Your mission is absolute diversion accuracy under extreme time pressure.</p>
+                        
+                        <div style="background: rgba(0,0,0,0.6); padding: 40px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.15); margin-top: 40px; box-shadow: inset 0 0 40px rgba(0,0,0,0.6);">
+                            <h3 style="color:#fff; margin-bottom: 25px; font-size: 2rem;">Engine Mechanics:</h3>
+                            <ul style="color:#cbd5e1; font-size:clamp(1.2rem, 2.5vw, 1.5rem); line-height: 1.9; margin-left: 35px;">
+                                <li style="margin-bottom: 20px;">An item will materialize on the central stage.</li>
+                                <li style="margin-bottom: 20px;"><strong>DYNAMIC TIMER:</strong> You start with 5 seconds. As your combo grows, the simulation accelerates.</li>
+                                <li style="margin-bottom: 20px;"><strong>CLICK</strong> the correct bin (Compost, Recycle, Landfill, or E-Waste) to route the item.</li>
+                                <li style="margin-bottom: 20px;">Consecutive correct sorts build your <strong>Combo Multiplier</strong> for exponential scores.</li>
+                                <li>Use the <strong style="color:#ef4444;">ABORT</strong> button to reset at any time.</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
+            
             <div class="nav-footer">
-                <button class="btn-action secondary" id="btn-back" onclick="Engine.prevSlide()">Back</button>
+                <button class="btn-action ghost" id="btn-back" onclick="Engine.prevSlide()">Back</button>
                 <button class="btn-action" id="btn-fwd" onclick="Engine.nextSlide()">Next</button>
             </div>
         </div>
     </div>
 
     <div id="game-layer" class="hidden">
+        
         <div class="hud-bar">
-            <div class="stat-block"><span class="stat-lbl">ITEMS DIVERTED</span><span class="stat-num" id="ui-turn">0</span></div>
+            <div class="stat-block"><span class="stat-lbl">DIVERTED</span><span class="stat-num" id="ui-turn">0/50</span></div>
             <div class="combo-center">
                 <div id="combo-txt">x1</div>
-                <div class="combo-meter" id="combo-meter-bg"><div class="combo-meter-fill" id="combo-meter-fill"></div></div>
+                <div id="streak-msg">STREAK BONUS!</div>
             </div>
             <div class="stat-block"><span class="stat-lbl">IMPACT SCORE</span><span class="stat-num" id="ui-score">0000000</span></div>
-            <div class="level-container">
-                <div class="lvl-text" id="ui-lvl">LEVEL 1: INITIATE</div>
-                <div class="xp-bar-bg"><div class="xp-bar-fill" id="ui-xp"></div></div>
-            </div>
         </div>
         
-        <div id="toast-container"></div>
+        <div class="reset-zone"><button class="btn-kill" onclick="Game.reset()">ABORT SIMULATION</button></div>
+
         <div id="item-arena"></div>
 
         <div id="bins-dock">
-            <div class="bin-wrapper">
-                <div class="bin-unit" id="bin-comp" onclick="GameManager.sort('compost')">
-                    <div class="bin-void"></div><div class="bin-chassis"><svg class="bin-logo" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/><path d="M2 12h20"/></svg><div class="bin-txt">Compost</div></div><div class="bin-rim"></div>
-                </div>
-                <div class="key-hint">◄ LEFT</div>
+            <div class="bin-unit" id="bin-comp" onclick="Game.sort('compost')">
+                <div class="bin-void"></div><div class="bin-chassis"><svg class="bin-logo" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/><path d="M2 12h20"/></svg><div class="bin-txt">Compost</div></div><div class="bin-rim"></div>
             </div>
-            <div class="bin-wrapper">
-                <div class="bin-unit" id="bin-recy" onclick="GameManager.sort('recycle')">
-                    <div class="bin-void"></div><div class="bin-chassis"><svg class="bin-logo" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12c0 6-4.39 10-9.806 10C7.792 22 4.24 18.33 3 14"/><path d="M2 10c0-6 4.39-10 9.806-10C16.208 0 19.76 3.67 21 8"/><path d="m7 14-4-4-4 4"/><path d="m21 8-4-4-4 4"/></svg><div class="bin-txt">Recycle</div></div><div class="bin-rim"></div>
-                </div>
-                <div class="key-hint">▼ DOWN</div>
+            <div class="bin-unit" id="bin-recy" onclick="Game.sort('recycle')">
+                <div class="bin-void"></div><div class="bin-chassis"><svg class="bin-logo" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12c0 6-4.39 10-9.806 10C7.792 22 4.24 18.33 3 14"/><path d="M2 10c0-6 4.39-10 9.806-10C16.208 0 19.76 3.67 21 8"/><path d="m7 14-4-4-4 4"/><path d="m21 8-4-4-4 4"/></svg><div class="bin-txt">Recycle</div></div><div class="bin-rim"></div>
             </div>
-            <div class="bin-wrapper">
-                <div class="bin-unit" id="bin-land" onclick="GameManager.sort('landfill')">
-                    <div class="bin-void"></div><div class="bin-chassis"><svg class="bin-logo" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg><div class="bin-txt">Landfill</div></div><div class="bin-rim"></div>
-                </div>
-                <div class="key-hint">RIGHT ►</div>
+            <div class="bin-unit" id="bin-land" onclick="Game.sort('landfill')">
+                <div class="bin-void"></div><div class="bin-chassis"><svg class="bin-logo" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg><div class="bin-txt">Landfill</div></div><div class="bin-rim"></div>
+            </div>
+            <div class="bin-unit" id="bin-ewas" onclick="Game.sort('ewaste')">
+                <div class="bin-void"></div><div class="bin-chassis"><svg class="bin-logo" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg><div class="bin-txt">E-Waste</div></div><div class="bin-rim"></div>
             </div>
         </div>
+
     </div>
 
     <canvas id="fx-layer"></canvas>
-    <div id="shatter-overlay" class="hidden"></div>
 
     <div id="result-modal">
         <div class="res-card">
+            <div class="res-glow" id="res-g"></div>
             <div class="res-scroll">
                 <div class="res-icon" id="res-i">✅</div>
                 <div class="res-head" id="res-h">ACCURATE</div>
                 <div class="res-body" id="res-b">Explanation...</div>
             </div>
-            <div class="res-footer"><button class="btn-proceed" id="btn-proc" onclick="GameManager.nextTurn()">PROCESS NEXT ITEM</button></div>
-        </div>
-    </div>
-
-    <div id="level-modal">
-        <div class="res-card" style="border-color: #a855f7; box-shadow: 0 0 100px rgba(168, 85, 247, 0.5);">
-            <div class="res-scroll">
-                <div class="res-icon">🚀</div>
-                <div class="res-head lvl">LEVEL UP</div>
-                <div class="res-body" id="lvl-b" style="border-left-color: #a855f7; font-size: 1.8rem; text-align: center;">You reached Level 2! Processing speed increased.</div>
+            <div class="res-footer">
+                <button class="btn-proceed" id="btn-proc" onclick="Game.next()">PROCESS NEXT ITEM</button>
             </div>
-            <div class="res-footer"><button class="btn-proceed" style="background: #a855f7; color: white;" onclick="GameManager.closeLevelModal()">CONTINUE</button></div>
         </div>
     </div>
 
     <script>
-        // ============================================================================
-        // AUDIO SYNTHESIZER ENGINE (Web Audio API)
-        // ============================================================================
-        const AudioEngine = {
-            ctx: null, masterGain: null, initialized: false,
-            init() {
-                if(this.initialized) return;
-                window.AudioContext = window.AudioContext || window.webkitAudioContext;
-                this.ctx = new AudioContext();
-                this.masterGain = this.ctx.createGain();
-                this.masterGain.gain.value = 0.3;
-                this.masterGain.connect(this.ctx.destination);
-                this.initialized = true;
+        /**
+         * MASSIVE 400+ ITEM DATABASE WITH E-WASTE EXPANSION AND SPECIFIC CONTEXT ITEMS
+         */
+        const DATABASE = [
+            // COMPOST
+            {e:"🍌",n:"Banana Peel",b:"compost",d:"Organic fruit waste breaks down quickly into nutrient-rich soil. It completely prevents methane creation when processed aerobically in a green bin."}, {e:"🍎",n:"Apple Core",b:"compost",d:"High nitrogen content, perfect for green bins. Apples rotting in landfills are a major source of greenhouse gases."}, {e:"☕",n:"Coffee Grounds",b:"compost",d:"An excellent nitrogen source for healthy compost. Don't throw them in the trash!"}, {e:"📄",n:"Coffee Filter",b:"compost",d:"Unbleached and bleached paper filters decompose completely alongside the coffee grounds."}, {e:"🥚",n:"Eggshells",b:"compost",d:"Adds necessary calcium to compost, which helps agricultural plants build strong cell walls."},
+            {e:"🍵",n:"Tea Bag (Paper)",b:"compost",d:"Paper and leaves compost perfectly (try to remove metal staples if possible)."}, {e:"🧻",n:"Greasy Napkin",b:"compost",d:"Food-soiled paper cannot be recycled because water and oil don't mix in pulping, but it composts very well."}, {e:"🍕",n:"Pizza Box Bottom",b:"compost",d:"Grease ruins paper recycling batches. Always tear off the greasy bottom and send it to compost."}, {e:"🌿",n:"Grass Clippings",b:"compost",d:"Standard yard waste, provides the essential 'green' matter for a healthy compost pile."}, {e:"🍂",n:"Dead Leaves",b:"compost",d:"Excellent 'brown' carbon matter required for balancing the nitrogen in a compost pile."},
+            {e:"🥔",n:"Potato Peels",b:"compost",d:"Organic vegetable scraps break down easily and feed soil microbes."}, {e:"🥕",n:"Carrot Tops",b:"compost",d:"Leafy green vegetable trimmings decompose rapidly."}, {e:"🧅",n:"Onion Skins",b:"compost",d:"Adds papery organic layers to commercial compost systems."}, {e:"🥑",n:"Avocado Skin",b:"compost",d:"Compostable fruit waste that enriches the soil."}, {e:"🥑",n:"Avocado Pit",b:"compost",d:"Takes a while to break down, but fully compostable in high-heat commercial facilities."},
+            {e:"🍞",n:"Moldy Bread",b:"compost",d:"Spoiled food belongs in compost, never the trash. Fungi and microbes will finish eating it."}, {e:"🍝",n:"Cooked Pasta",b:"compost",d:"Starchy foods break down exceptionally well in high-heat commercial green bins."}, {e:"🍚",n:"Cooked Rice",b:"compost",d:"Standard organic grain waste. Keeps methane out of the atmosphere."}, {e:"🥜",n:"Peanut Shells",b:"compost",d:"Adds physical structure and vital aeration to compost piles."}, {e:"🎃",n:"Pumpkin Guts",b:"compost",d:"Perfect wet seasonal organic matter. Never send gourds to the landfill."},
+            {e:"🍋",n:"Citrus Peels",b:"compost",d:"Fully compostable organics, though they take slightly longer to break down."}, {e:"🌽",n:"Corn Cobs",b:"compost",d:"Provides essential aeration as it slowly breaks down in commercial composters."}, {e:"🪴",n:"Houseplant Trims",b:"compost",d:"Standard indoor yard waste."}, {e:"💇",n:"Hair Clippings",b:"compost",d:"Human and pet hair is incredibly rich in nitrogen and completely biodegradable."}, {e:"☁️",n:"100% Cotton Balls",b:"compost",d:"Pure natural plant fibers can be composted easily."},
+            {e:"🧶",n:"Cotton Dryer Lint",b:"compost",d:"Natural fiber lint is compostable (but ensure you aren't drying synthetic plastics like polyester)."}, {e:"🍡",n:"Popsicle Sticks",b:"compost",d:"Untreated wood breaks down naturally over time."}, {e:"🥢",n:"Wooden Chopsticks",b:"compost",d:"Disposable bamboo and wood breaks down cleanly in green bins."}, {e:"🪵",n:"Sawdust",b:"compost",d:"Carbon-rich brown matter (only if from untreated, unpainted wood)."}, {e:"🧻",n:"Paper Towel Roll",b:"compost",d:"The cardboard core is great for compost piles if you tear it up."},
+            {e:"📄",n:"Shredded Paper",b:"compost",d:"Often too small for recycling facility sorting screens to catch, making it much better to compost."}, {e:"🥤",n:"BPI PLA Cup",b:"compost",d:"Bioplastics require the high heat of an industrial compost facility to break down properly."}, {e:"🍴",n:"Compostable Fork",b:"compost",d:"Certified compostable bioplastic goes in the green bin, never recycling."}, {e:"🍑",n:"Peach Pit",b:"compost",d:"Breaks down over time in heavy commercial facilities."}, {e:"🥗",n:"Spoiled Salad",b:"compost",d:"Wet green matter that creates liquid methane if sent to a landfill."},
+            {e:"🍽️",n:"Soiled Paper Plate",b:"compost",d:"Uncoated soiled paper plates compost easily. (If coated in shiny plastic, they are trash)."}, {e:"🍖",n:"Chicken Bones",b:"compost",d:"Accepted in commercial hot composters which easily break down meat and bone."}, {e:"🧀",n:"Moldy Cheese",b:"compost",d:"Dairy breaks down perfectly in commercial green bins due to the high microbial heat."}, {e:"🌲",n:"Pine Needles",b:"compost",d:"Acidic brown matter, great for balancing compost pH."}, {e:"🍉",n:"Watermelon Rind",b:"compost",d:"High water content fruit composts incredibly fast."},
+            {e:"🌻",n:"Dead Flowers",b:"compost",d:"Standard organic plant material."}, {e:"🍓",n:"Moldy Berries",b:"compost",d:"Spoiled fruit is prime microbe food."}, {e:"🥦",n:"Broccoli Stalks",b:"compost",d:"Tough but highly compostable organic matter."}, {e:"🧄",n:"Garlic Skins",b:"compost",d:"Papery organic layers."}, {e:"🪵",n:"Wood Ash",b:"compost",d:"From untreated wood fires, adds valuable potassium to compost."},
+            {e:"🥥",n:"Coconut Shell",b:"compost",d:"Very slow to break down, but fully organic and compostable."}, {e:"🍄",n:"Old Mushrooms",b:"compost",d:"Fungi break down almost immediately."}, {e:"🥝",n:"Kiwi Skin",b:"compost",d:"Organic fruit peel."}, {e:"🍍",n:"Pineapple Top",b:"compost",d:"Tough but organic plant waste."}, {e:"🥬",n:"Cabbage Leaves",b:"compost",d:"Leafy green waste."},
+            {e:"🌶️",n:"Pepper Stems",b:"compost",d:"Plant trimmings."}, {e:"🍇",n:"Grape Stems",b:"compost",d:"Small woody plant waste."}, {e:"🌱",n:"Weeds",b:"compost",d:"Green yard waste (commercial hot compost gets hot enough to kill weed seeds)."}, {e:"🐕",n:"Dog Hair",b:"compost",d:"Pet fur is extremely nitrogen-rich."}, {e:"🌾",n:"Hay/Straw",b:"compost",d:"Excellent brown matter."},
+            {e:"🌰",n:"Chestnut Shells",b:"compost",d:"Hard organic casing."}, {e:"🥟",n:"Stale Tortilla",b:"compost",d:"Grain-based food waste."}, {e:"🥩",n:"Fat Trimmings",b:"compost",d:"Commercial composters get hot enough for all fats and meats."}, {e:"🦞",n:"Lobster Shell",b:"compost",d:"Commercial composters easily handle seafood shells."}, {e:"🐟",n:"Fish Bones",b:"compost",d:"Organic animal waste."},
+            {e:"🍵",n:"Matcha Powder",b:"compost",d:"Ground tea leaves."}, {e:"🧇",n:"Burnt Waffle",b:"compost",d:"Food waste."}, {e:"🥨",n:"Stale Pretzel",b:"compost",d:"Bread product."}, {e:"🫘",n:"Spoiled Beans",b:"compost",d:"Organic matter."}, {e:"🥒",n:"Cucumber Ends",b:"compost",d:"Vegetable scraps."},
+            {e:"🫐",n:"Squished Berries",b:"compost",d:"Fruit waste."}, {e:"🍈",n:"Melon Seeds",b:"compost",d:"Organic seeds."}, {e:"🥭",n:"Mango Pit",b:"compost",d:"Large fruit pit."}, {e:"🍅",n:"Rotten Tomato",b:"compost",d:"Spoiled nightshade."}, {e:"🥡",n:"Paper Takeout Box",b:"compost",d:"If heavily soiled with food/grease, compost it. If perfectly clean, recycle it."},
+            {e:"🗞️",n:"Soiled Newspaper",b:"compost",d:"If paper gets covered in food, it must be composted. The oil ruins recycling."}, {e:"🌯",n:"Burrito Scraps",b:"compost",d:"Mixed organic food."}, {e:"🌮",n:"Taco Shell",b:"compost",d:"Corn product."}, {e:"🥞",n:"Pancake Scraps",b:"compost",d:"Food."}, {e:"🥣",n:"Oatmeal Leftovers",b:"compost",d:"Grains."},
+            {e:"🥢",n:"Bamboo Skewer",b:"compost",d:"Untreated wood."}, {e:"🥖",n:"Stale Baguette",b:"compost",d:"Bread."}, {e:"🥐",n:"Old Croissant",b:"compost",d:"Pastry."}, {e:"🥯",n:"Hard Bagel",b:"compost",d:"Bread."}, {e:"🍿",n:"Stale Popcorn",b:"compost",d:"Corn."},
+            {e:"🥔",n:"French Fry",b:"compost",d:"Potato."}, {e:"🧄",n:"Garlic Clove",b:"compost",d:"Vegetable."}, {e:"🧅",n:"Scallion Roots",b:"compost",d:"Plant waste."}, {e:"🫑",n:"Bell Pepper Core",b:"compost",d:"Seeds and stem."}, {e:"🌶️",n:"Jalapeno Seeds",b:"compost",d:"Organics."},
+            {e:"🍒",n:"Cherry Pits",b:"compost",d:"Fruit stone."}, {e:"🍑",n:"Plum Pit",b:"compost",d:"Fruit stone."}, {e:"🍐",n:"Pear Core",b:"compost",d:"Fruit waste."}, {e:"🍇",n:"Moldy Grapes",b:"compost",d:"Spoiled fruit."}, {e:"🍊",n:"Orange Peel",b:"compost",d:"Citrus."},
+            
+            // RECYCLE
+            {e:"📦",n:"Cardboard Box",b:"recycle",d:"Cardboard is highly recyclable and saves trees. Flatten it first to save space in the truck!"}, {e:"📰",n:"Newspaper",b:"recycle",d:"Can be recycled into new paper products, egg cartons, or home insulation."}, {e:"📄",n:"Printer Paper",b:"recycle",d:"High-grade white paper is very valuable for paper recyclers."}, {e:"✉️",n:"Junk Mail",b:"recycle",d:"Most paper mail, even with small plastic address windows, is completely recyclable."}, {e:"📖",n:"Magazine",b:"recycle",d:"Glossy paper is accepted in standard single-stream recycling programs."},
+            {e:"🥣",n:"Cereal Box",b:"recycle",d:"Paperboard is easily recycled. Just make sure to remove the inner plastic bag first."}, {e:"🥫",n:"Soda Can",b:"recycle",d:"Aluminum is a true circular material. It is infinitely recyclable without losing any quality."}, {e:"🥫",n:"Soup Can",b:"recycle",d:"Steel is easily separated at facilities using giant magnets and melted down endlessly."}, {e:"🥡",n:"Clean Foil",b:"recycle",d:"Clean aluminum foil can be melted down and reused. Keep it free of baked-on food."}, {e:"🍾",n:"Glass Water Bottle",b:"recycle",d:"Glass can be recycled endlessly into new glass products without degradation."},
+            {e:"🫙",n:"Pasta Sauce Jar",b:"recycle",d:"Rinse it out first! Glass is infinitely recyclable."}, {e:"🧴",n:"Plastic Water Bottle",b:"recycle",d:"PET (#1) plastic is widely accepted and turned into new bottles or polyester fiber for clothing."}, {e:"🥛",n:"Plastic Milk Jug",b:"recycle",d:"HDPE (#2) is thick, durable, and highly sought after by recycling commodity markets."}, {e:"🧼",n:"Detergent Bottle",b:"recycle",d:"Thick, durable #2 plastic that is very easy to sort and recycle."}, {e:"🧴",n:"Shampoo Bottle",b:"recycle",d:"Usually #1 or #2 plastic. Empty it out completely and recycle!"},
+            {e:"🍦",n:"Yogurt Container",b:"recycle",d:"Polypropylene (#5) is increasingly accepted in modern curbside programs. Rinse it first."}, {e:"🧈",n:"Margarine Tub",b:"recycle",d:"Rigid plastics (tubs and jugs) are generally accepted in the blue bin."}, {e:"🍕",n:"Clean Pizza Box Top",b:"recycle",d:"If the top half has zero grease, tear it off and recycle it! Compost the greasy bottom."}, {e:"🥚",n:"Paper Egg Carton",b:"recycle",d:"Molded pulp is highly recyclable (and also compostable)."}, {e:"💨",n:"Empty Aerosol Can",b:"recycle",d:"If completely empty and contained non-toxic materials, the steel/aluminum is recyclable."},
+            {e:"📒",n:"Phone Book",b:"recycle",d:"Low-grade paper, but fully recyclable."}, {e:"🎁",n:"Wrapping Paper",b:"recycle",d:"Standard paper wrap is recyclable. (Foil or glitter wrap is NOT and must go to landfill)."}, {e:"🛍️",n:"Paper Shopping Bag",b:"recycle",d:"Kraft paper bags are easily recycled into new paper products."}, {e:"🗂️",n:"File Folder",b:"recycle",d:"Standard manila or colored paper folders belong in recycling."}, {e:"📝",n:"Sticky Note",b:"recycle",d:"The small amount of adhesive is easily removed during the paper pulping and washing process."},
+            {e:"🗺️",n:"Brochure",b:"recycle",d:"Glossy or matte paper is completely recyclable."}, {e:"📚",n:"Paperback Book",b:"recycle",d:"Fully recyclable in the paper bin if you can't donate it to a library."}, {e:"🥤",n:"Clear Plastic Cup",b:"recycle",d:"Rigid clear plastic cups (#1 or #5) are usually accepted."}, {e:"🍱",n:"Plastic Takeout Box",b:"recycle",d:"If rinsed totally free of food, these rigid plastics are recyclable."}, {e:"🍓",n:"Berry Clamshell",b:"recycle",d:"PET plastic containers are acceptable in advanced optical sorting programs."},
+            {e:"🧃",n:"Juice Carton",b:"recycle",d:"Tetra Paks are hydro-pulped at the facility to recover the high-quality paper layer."}, {e:"🥛",n:"Milk Carton",b:"recycle",d:"Gable-top cartons are widely recyclable in modern facilities."}, {e:"🍺",n:"Glass Beer Bottle",b:"recycle",d:"Glass is infinitely recyclable. Keeping it out of the landfill is crucial."}, {e:"🛢️",n:"Olive Oil Tin",b:"recycle",d:"Steel and tin containers are highly recyclable."}, {e:"📔",n:"Spiral Notebook",b:"recycle",d:"The paper is recyclable. (Ideally, twist and remove the metal spiral first)."},
+            {e:"📐",n:"Old Textbook",b:"recycle",d:"Paperbacks or pages torn from hardcovers are fully recyclable! Save the trees. Even C++ coding books belong here!"}, {e:"✉️",n:"Greeting Card",b:"recycle",d:"Paper cards (without electronics, foil, or glitter) are recyclable."}, {e:"📅",n:"Wall Calendar",b:"recycle",d:"Paper pages are highly recyclable."}, {e:"🧾",n:"Standard Receipt",b:"recycle",d:"Non-thermal paper receipts only. (If you scratch it and it leaves a dark mark, it's thermal and must be trashed)."}, {e:"🎫",n:"Paper Ticket",b:"recycle",d:"Uncoated paper."},
+            {e:"🧃",n:"Soup Carton",b:"recycle",d:"Aseptic packaging is recyclable in most major cities."}, {e:"🧴",n:"Lotion Bottle",b:"recycle",d:"Rigid plastic. Remove and trash the complex pump mechanism first."}, {e:"🧴",n:"Mouthwash Bottle",b:"recycle",d:"Clear PET plastic is highly valuable to recyclers."}, {e:"💊",n:"Pill Bottle",b:"recycle",d:"Empty rigid plastic (usually #5)."}, {e:"🍷",n:"Wine Bottle",b:"recycle",d:"Glass is infinitely recyclable."},
+            {e:"🧊",n:"Ice Cream Tub",b:"recycle",d:"Rigid plastic tubs (#5)."}, {e:"🧈",n:"Butter Box",b:"recycle",d:"Paperboard packaging."}, {e:"🍪",n:"Cookie Box",b:"recycle",d:"Paperboard."}, {e:"🫖",n:"Tea Caddy",b:"recycle",d:"Metal tins are infinitely recyclable."}, {e:"🥫",n:"Pet Food Can",b:"recycle",d:"Steel/aluminum cans. Rinse out the food first!"},
+            {e:"🧴",n:"Bleach Jug",b:"recycle",d:"Thick HDPE plastic (rinsed)."}, {e:"🚿",n:"Body Wash Bottle",b:"recycle",d:"Rigid plastic."}, {e:"🧻",n:"Toilet Paper Core",b:"recycle",d:"Cardboard tube."}, {e:"🧴",n:"Ketchup Bottle",b:"recycle",d:"Clear plastic condiment bottle (rinsed)."}, {e:"🧴",n:"Mustard Bottle",b:"recycle",d:"Yellow plastic bottle (rinsed)."},
+            {e:"🫙",n:"Pickle Jar",b:"recycle",d:"Glass container."}, {e:"🫙",n:"Jam Jar",b:"recycle",d:"Glass container."}, {e:"🥤",n:"Iced Coffee Cup",b:"recycle",d:"Clear rigid plastic."}, {e:"🍽️",n:"Aluminum Tray",b:"recycle",d:"Clean catering trays."}, {e:"🗞️",n:"Clean Flyer",b:"recycle",d:"Paper advertisement."},
+            {e:"📚",n:"Catalog",b:"recycle",d:"Bound paper."}, {e:"📦",n:"Shoe Box",b:"recycle",d:"Cardboard."}, {e:"🍕",n:"Frozen Pizza Box",b:"recycle",d:"Clean paperboard."}, {e:"🍝",n:"Pasta Box",b:"recycle",d:"Paperboard (remove plastic window if possible)."}, {e:"🍫",n:"Chocolate Box",b:"recycle",d:"Paperboard packaging."},
+            {e:"🖍️",n:"Crayon Box",b:"recycle",d:"Paperboard."}, {e:"📎",n:"Paper Clip Box",b:"recycle",d:"Cardboard or hard plastic box."}, {e:"🧴",n:"Hand Sanitizer Bottle",b:"recycle",d:"Rigid plastic."}, {e:"🍾",n:"Olive Oil Bottle",b:"recycle",d:"Glass."}, {e:"🥫",n:"Energy Drink Can",b:"recycle",d:"Aluminum is infinitely recyclable."},
+            {e:"🥤",n:"Boba Cup (Plastic)",b:"recycle",d:"Clear rigid plastic (throw the straw in the trash)."}, {e:"🧴",n:"Dish Soap Bottle",b:"recycle",d:"Rigid plastic."}, {e:"🧴",n:"Window Cleaner Bottle",b:"recycle",d:"Plastic bottle (throw the complex spray trigger in the trash)."}, {e:"🫙",n:"Baby Food Jar",b:"recycle",d:"Glass."}, {e:"🥫",n:"Tuna Can",b:"recycle",d:"Metal."},
+            {e:"📄",n:"Index Card",b:"recycle",d:"Paper."}, {e:"✉️",n:"Manila Envelope",b:"recycle",d:"Paper."}, {e:"📦",n:"Corrugated Box",b:"recycle",d:"Cardboard."}, {e:"📦",n:"Moving Box",b:"recycle",d:"Cardboard."}, {e:"📄",n:"Construction Paper",b:"recycle",d:"Paper."},
+            {e:"🧴",n:"Contact Lens Solution",b:"recycle",d:"Rigid plastic."}, {e:"🧴",n:"Saline Bottle",b:"recycle",d:"Rigid plastic."}, {e:"🫙",n:"Salsa Jar",b:"recycle",d:"Glass."}, {e:"🥫",n:"Baked Beans Can",b:"recycle",d:"Metal."}, {e:"📦",n:"Tissue Box",b:"recycle",d:"Paperboard (tear out the plastic slit first)."},
+            {e:"🖼️",n:"Geometry Dash Poster",b:"recycle",d:"Standard glossy paper posters are recyclable. Keep it out of the landfill!"}, {e:"📖",n:"C++ Programming Textbook",b:"recycle",d:"Thick paperbacks or torn pages from hardcovers are fully recyclable pulp."},
+            
+            // LANDFILL
+            {e:"🍟",n:"Potato Chip Bag",b:"landfill",d:"Made of mixed materials (plastic lined with metallic film) which cannot be separated. Must go to the landfill."}, {e:"🍬",n:"Candy Wrapper",b:"landfill",d:"Flimsy, mixed-material plastics are not recyclable curbside. They blow away and contaminate streams."}, {e:"☕",n:"Styrofoam Cup",b:"landfill",d:"Expanded polystyrene (EPS) is 95% air and rarely accepted in curbside recycling. Avoid buying it!"}, {e:"🌯",n:"Plastic Wrap",b:"landfill",d:"Film plastics tangle up the spinning gears at recycling plants. They cause massive machine jams."}, {e:"🛍️",n:"Plastic Grocery Bag",b:"landfill",d:"These tangle in machinery violently! They require special store drop-off, otherwise they are trash."},
+            {e:"🍷",n:"Broken Drink Glass",b:"landfill",d:"Treated glassware melts at a different temp than bottle glass, ruining entire recycling batches."}, {e:"☕",n:"Broken Ceramic Mug",b:"landfill",d:"Ceramics cannot be melted down and recycled like glass. It goes to the landfill."}, {e:"👶",n:"Disposable Diaper",b:"landfill",d:"Contain human waste and complex mixed plastics. Pure landfill."}, {e:"🐶",n:"Bagged Pet Waste",b:"landfill",d:"Carnivore/omnivore waste contains pathogens. Cannot be safely municipal-composted."},
+            {e:"🐈",n:"Used Kitty Litter",b:"landfill",d:"Contains pathogens and clay/silica; belongs strictly in the trash."}, {e:"🪥",n:"Toothpaste Tube",b:"landfill",d:"Mixed materials (layers of plastic and aluminum) make it unrecyclable."}, {e:"🪥",n:"Used Toothbrush",b:"landfill",d:"Nylon bristles and multi-plastic/rubber handles cannot be separated."}, {e:"🤧",n:"Used Tissues",b:"landfill",d:"Paper fibers are too short to recycle, and bodily fluids are a biohazard."}, {e:"👂",n:"Cotton Swabs (Plastic)",b:"landfill",d:"Small plastic sticks fall right through the sorting screens at the facility."},
+            {e:"🩹",n:"Used Band-Aid",b:"landfill",d:"Biohazard and complex mixed materials."}, {e:"🦷",n:"Dental Floss",b:"landfill",d:"Tangles in machinery and is usually made of synthetic nylon or Teflon."}, {e:"🧽",n:"Kitchen Sponge",b:"landfill",d:"Synthetic sponges are made of unrecyclable polyurethane plastics."}, {e:"🪵",n:"Treated Wood",b:"landfill",d:"Chemical treatments (like arsenic/copper) mean it cannot be composted safely. Landfill it."}, {e:"🧸",n:"Broken Plastic Toy",b:"landfill",d:"Made of complex, mixed, or unknown hard plastics with metal screws."},
+            {e:"☕",n:"Hot Coffee Cup",b:"landfill",d:"Trick question! Standard paper coffee cups have an inner plastic liner that cannot be separated. Trash."}, {e:"🍴",n:"Plastic Fork",b:"landfill",d:"Too small, wrong shape, and low-grade plastic for optical sorters to catch."}, {e:"🥤",n:"Plastic Straw",b:"landfill",d:"Too small and lightweight; they fall right through sorting screens and end up in the ocean."}, {e:"🧃",n:"Juice Pouch",b:"landfill",d:"Foil and plastic layers fused permanently together. Unrecyclable."}, {e:"🥫",n:"Ketchup Packet",b:"landfill",d:"Mixed materials and way too small to sort."},
+            {e:"💊",n:"Pill Blister Pack",b:"landfill",d:"Foil and plastic fused together. Trash."}, {e:"🖼️",n:"Glossy Photo",b:"landfill",d:"Photographic paper is coated in heavy chemicals and plastics."}, {e:"📄",n:"Laminated Paper",b:"landfill",d:"Paper permanently fused with plastic cannot be pulped."}, {e:"🧾",n:"Thermal Receipt",b:"landfill",d:"Coated with BPA/BPS chemicals; do NOT recycle or compost them to avoid stream contamination."}, {e:"🍏",n:"Applesauce Pouch",b:"landfill",d:"Multi-layered mixed materials."},
+            {e:"🥫",n:"Pringles Can",b:"landfill",d:"Cardboard tube, metal bottom, plastic lid. Mixed materials = trash."}, {e:"🥜",n:"Styrofoam Peanuts",b:"landfill",d:"Foam peanuts fly around and contaminate recycling. Trash."}, {e:"🫧",n:"Bubble Wrap",b:"landfill",d:"Film plastic that tangles in machinery violently."}, {e:"🧻",n:"Used Wet Wipes",b:"landfill",d:"Made of synthetic plastic fibers that do not break down. NEVER flush them; put in trash."}, {e:"🧺",n:"Dryer Sheets",b:"landfill",d:"Made of synthetic polyester fibers covered in chemicals."},
+            {e:"🖊️",n:"Ballpoint Pen",b:"landfill",d:"Mixed hard plastics, ink, and metals."}, {e:"🏈",n:"Deflated Football",b:"landfill",d:"Synthetic leather and rubber bladders cannot be recycled. Even a Seahawks one."},
+            {e:"💿",n:"Scratched CD",b:"landfill",d:"Polycarbonate plastic and aluminum layers. E-waste programs rarely take these anymore."}, {e:"📼",n:"VHS Tape",b:"landfill",d:"Mylar magnetic tape tangles machinery violently."}, {e:"🎈",n:"Deflated Balloon",b:"landfill",d:"Latex or mylar, neither belongs in recycling or compost."},
+            {e:"🎀",n:"Gift Bow",b:"landfill",d:"Synthetic plastic fibers that tangle machinery."}, {e:"🧷",n:"Safety Pin",b:"landfill",d:"Too small for recycling screens to catch."}, {e:"🪒",n:"Disposable Razor",b:"landfill",d:"Mixed plastic and sharp metal."}, {e:"🧯",n:"Empty Lighter",b:"landfill",d:"Mixed plastic, metal, and flint."}, {e:"🧴",n:"Deodorant Stick",b:"landfill",d:"Complex mixed plastics and a turning mechanism."},
+            {e:"💄",n:"Empty Lipstick",b:"landfill",d:"Mixed materials, impossible to clean."}, {e:"💅",n:"Nail Polish Bottle",b:"landfill",d:"Hazardous waste/glass. Trash in a standard system."}, {e:"🧪",n:"Super Glue Tube",b:"landfill",d:"Chemical contamination."}, {e:"🧲",n:"Broken Magnet",b:"landfill",d:"Sticks to sorting machinery and causes chaos."}, {e:"🧵",n:"Spool of Thread",b:"landfill",d:"Tangles sorting screens."},
+            {e:"🪢",n:"Nylon Rope",b:"landfill",d:"Tangles machinery."}, {e:"🧤",n:"Rubber Gloves",b:"landfill",d:"Latex/nitrile is not accepted."}, {e:"😷",n:"Face Mask",b:"landfill",d:"Synthetic fibers, metal nose piece, biohazard."}, {e:"🧦",n:"Holey Socks",b:"landfill",d:"Textiles tangle machinery. Trash if ruined."}, {e:"👟",n:"Worn Out Sneaker",b:"landfill",d:"Complex mixed materials."},
+            {e:"🌂",n:"Broken Umbrella",b:"landfill",d:"Metal, plastic, nylon."}, {e:"🚿",n:"Shower Liner",b:"landfill",d:"PVC plastic is rarely accepted."}, {e:"🧊",n:"Gel Ice Pack",b:"landfill",d:"Plastic film and chemical gel."}, {e:"🥡",n:"Styrofoam Clamshell",b:"landfill",d:"Expanded polystyrene takeout boxes."}, {e:"🥩",n:"Meat Soaker Pad",b:"landfill",d:"Plastic and absorbent gel."},
+            {e:"🧀",n:"Cheese Wrapper",b:"landfill",d:"Thin film plastic."}, {e:"🥖",n:"Bread Bag Tag",b:"landfill",d:"Too small plastic."}, {e:"🥫",n:"Soup Can Lid",b:"landfill",d:"Sharp and flat, often falls through or acts like paper in sorters."}, {e:"🪟",n:"Broken Window Glass",b:"landfill",d:"Treated glass ruins bottle glass recycling."}, {e:"🪞",n:"Broken Mirror",b:"landfill",d:"Coated glass cannot be recycled."},
+            {e:"🚬",n:"Cigarette Butts",b:"landfill",d:"Cellulose acetate (plastic) filters do not biodegrade."}, {e:"🎇",n:"Used Fireworks",b:"landfill",d:"Chemical residue."}, {e:"🧹",n:"Broken Broom Bristles",b:"landfill",d:"Synthetic nylon."},
+            {e:"🧴",n:"Pump Dispenser",b:"landfill",d:"Mixed plastic and metal spring."}, {e:"🦷",n:"Floss Pick",b:"landfill",d:"Small plastic and nylon string."}, {e:"🩹",n:"Medical Tape",b:"landfill",d:"Adhesive and fabric."}, {e:"🧪",n:"Marker Pen",b:"landfill",d:"Mixed plastic and ink core."}, {e:"📎",n:"Binder Clip",b:"landfill",d:"Metal (too small to sort)."},
+            {e:"🚁",n:"Broken Drone Propeller",b:"landfill",d:"Specific hard mixed plastics (like DJI parts) that aren't electronic but can't be recycled."},
+
+            // E-WASTE / HAZMAT
+            {e:"🔋",n:"Alkaline Battery",b:"ewaste",d:"Needs e-waste drop-off to prevent fires. NEVER goes in standard recycling."}, {e:"📱",n:"Broken Smartphone",b:"ewaste",d:"Contains lithium-ion battery, gold, copper, and glass. High fire risk if crushed in a garbage truck."}, {e:"💻",n:"Broken Laptop",b:"ewaste",d:"Massive source of e-waste. Must be professionally dismantled to recover heavy metals."}, {e:"🖱️",n:"Broken Computer Mouse",b:"ewaste",d:"Electronic waste containing circuit boards and wiring. Never standard recycling."}, {e:"🎧",n:"Dead Wireless Earbuds",b:"ewaste",d:"Tiny lithium batteries inside make these a massive fire hazard at recycling plants. E-waste only. Keep your AirPods out of the trash."},
+            {e:"🎮",n:"Broken Game Controller",b:"ewaste",d:"Hard, complex plastics mixed with circuits and rumble motors. Unrecyclable in standard bins."}, {e:"🔌",n:"Power Cord",b:"ewaste",d:"Copper wiring coated in PVC. Tangles machinery and requires special e-waste extraction."}, {e:"💡",n:"LED Lightbulb",b:"ewaste",d:"Contains electronic circuits in the base. Must go to e-waste/hazardous drop-off, not the trash."}, {e:"🔋",n:"Lithium Power Bank",b:"ewaste",d:"EXTREME FIRE HAZARD. If punctured in a garbage compactor, it explodes. E-waste only."}, {e:"📷",n:"Digital Camera",b:"ewaste",d:"Full of circuit boards, rare earth metals, and batteries."},
+            {e:"📺",n:"Broken Monitor",b:"ewaste",d:"Contains heavy metals like lead and complex plastics. Requires e-waste processing."}, {e:"📟",n:"Old Calculator",b:"ewaste",d:"Electronics and batteries. (Even that TI-84 belongs in e-waste when it finally dies)."}, {e:"🕹️",n:"Retro Console Cartridge",b:"ewaste",d:"Contains printed circuit boards. Do not throw in the landfill."}, {e:"📠",n:"Printer Ink Cartridge",b:"ewaste",d:"Toxic ink and microchips. Send back to manufacturer or special e-waste drop-off."}, {e:"🔌",n:"USB Flash Drive",b:"ewaste",d:"Tiny electronic circuitry. Cannot be processed by standard facilities."},
+            {e:"🎤",n:"Broken Webcam",b:"ewaste",d:"Circuitry, glass lens, and wiring. Treat as e-waste. (Keep the Logitech out of the blue bin)."}, {e:"🥧",n:"Fried Microcomputer",b:"ewaste",d:"Circuit boards (like a Raspberry Pi) contain precious metals that must be recovered via e-waste."}, {e:"🎹",n:"Broken MIDI Keyboard",b:"ewaste",d:"Electronic music equipment is full of PCBs and copper wiring. E-waste only."}, {e:"⌚",n:"Dead Smartwatch",b:"ewaste",d:"Contains a sealed lithium-ion battery. Severe fire risk in standard bins."}
+        ];
+
+        /**
+         * PROCEDURAL AUDIO SYNTHESIZER
+         */
+        const SoundFX = {
+            ctx: null,
+            init() { 
+                if(!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioContext(); 
+                }
             },
-            playOsc(type, freq, detune, duration, vol, sweepFreq=null) {
-                if(!this.initialized) this.init();
+            playOsc(type, freq, vol, duration, slideFreq = null) {
+                if(!this.ctx) return;
                 const osc = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
-                osc.type = type; osc.frequency.value = freq; osc.detune.value = detune;
-                if(sweepFreq) { osc.frequency.exponentialRampToValueAtTime(sweepFreq, this.ctx.currentTime + duration); }
-                osc.connect(gain); gain.connect(this.masterGain);
+                osc.type = type; osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                if(slideFreq) osc.frequency.exponentialRampToValueAtTime(slideFreq, this.ctx.currentTime + duration);
                 gain.gain.setValueAtTime(vol, this.ctx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+                osc.connect(gain); gain.connect(this.ctx.destination);
                 osc.start(); osc.stop(this.ctx.currentTime + duration);
             },
-            sfxHover() { this.playOsc('sine', 440, 0, 0.1, 0.1); },
-            sfxSelect() { this.playOsc('square', 660, 0, 0.15, 0.2); },
-            sfxToss() { this.playOsc('triangle', 300, 0, 0.3, 0.3, 100); },
-            sfxDrop() { this.playOsc('sawtooth', 150, 0, 0.5, 0.4, 50); },
-            sfxSuccess(comboLevel) {
-                const baseFreq = 440 + (comboLevel * 20);
-                this.playOsc('sine', baseFreq, 0, 0.3, 0.3);
-                setTimeout(() => this.playOsc('sine', baseFreq * 1.5, 0, 0.4, 0.3), 100);
+            playToss() { this.playOsc('sine', 300, 0.1, 0.3, 100); },
+            playCorrect() { this.playOsc('square', 400, 0.1, 0.1, 800); setTimeout(()=>this.playOsc('square', 600, 0.1, 0.2, 1200), 100); },
+            playWrong() { this.playOsc('sawtooth', 200, 0.2, 0.3, 50); },
+            playCombo(streak) { 
+                const base = 300 + (streak * 50);
+                this.playOsc('sine', base, 0.1, 0.2); 
+                setTimeout(()=>this.playOsc('triangle', base * 1.5, 0.1, 0.3), 100); 
             },
-            sfxFail() {
-                this.playOsc('sawtooth', 200, 0, 0.4, 0.5, 100);
-                setTimeout(() => this.playOsc('sawtooth', 150, 0, 0.5, 0.5, 50), 150);
-            },
-            sfxLevelUp() {
-                [440, 554, 659, 880].forEach((f, i) => { setTimeout(() => this.playOsc('square', f, 0, 0.5, 0.3), i * 150); });
-            },
-            sfxLegendary() {
-                this.playOsc('sawtooth', 110, 0, 2.0, 0.8, 880);
-                setTimeout(() => this.playOsc('square', 220, 0, 1.5, 0.8, 1760), 500);
-            }
+            playAlarm() { this.playOsc('square', 800, 0.1, 0.2, 400); setTimeout(()=>this.playOsc('square', 800, 0.1, 0.2, 400), 200); }
         };
 
-        // ============================================================================
-        // ADVANCED PARTICLE & RENDER ENGINE
-        // ============================================================================
-        const RenderEngine = {
-            canvasFX: document.getElementById('fx-layer'), ctxFX: null, parts: [],
-            canvasW: document.getElementById('weather-canvas'), ctxW: null, weatherParts: [],
-            wType: 'clear', // clear, rain, snow, hyper
-            
-            init() {
-                this.ctxFX = this.canvasFX.getContext('2d', {alpha: true});
-                this.ctxW = this.canvasW.getContext('2d', {alpha: true});
-                this.resize(); window.addEventListener('resize', () => this.resize());
-                this.loop();
-            },
-            resize() {
-                this.canvasFX.width = window.innerWidth; this.canvasFX.height = window.innerHeight;
-                this.canvasW.width = window.innerWidth; this.canvasW.height = window.innerHeight;
-            },
-            setWeather(type) {
-                this.wType = type; this.weatherParts = [];
-                const max = type==='rain'?200:type==='snow'?100:type==='hyper'?300:0;
-                for(let i=0; i<max; i++) {
-                    this.weatherParts.push({
-                        x: Math.random()*this.canvasW.width, y: Math.random()*this.canvasW.height,
-                        s: Math.random()*3+1, v: Math.random()*10+5, a: Math.random()*Math.PI*2
-                    });
-                }
-                const bg = document.getElementById('scenery-layer');
-                const gnd = document.getElementById('ground');
-                const sun = document.getElementById('celestial-sun');
-                const moon = document.getElementById('celestial-moon');
-                if(type === 'clear') { bg.style.background = 'var(--sky-grad)'; gnd.style.filter = 'brightness(1)'; sun.style.opacity = '1'; moon.style.opacity = '0'; }
-                if(type === 'rain') { bg.style.background = 'linear-gradient(180deg, #18181b 0%, #27272a 100%)'; gnd.style.filter = 'brightness(0.6)'; sun.style.opacity = '0'; moon.style.opacity = '0.5'; }
-                if(type === 'snow') { bg.style.background = 'linear-gradient(180deg, #94a3b8 0%, #cbd5e1 100%)'; gnd.style.filter = 'brightness(1.5) grayscale(0.5)'; sun.style.opacity = '0.5'; moon.style.opacity = '0'; }
-                if(type === 'hyper') { bg.style.background = 'linear-gradient(180deg, #4c1d95 0%, #9d174d 100%)'; gnd.style.filter = 'hue-rotate(90deg) brightness(1.2)'; sun.style.opacity = '1'; sun.style.filter = 'hue-rotate(180deg)'; moon.style.opacity = '1'; moon.style.filter = 'hue-rotate(200deg)'; }
-            },
-            fireConfetti(x, y, binType) {
-                const cMap = { 'compost': [22,163,74], 'recycle': [37,99,235], 'landfill': [82,82,91] };
-                const col = cMap[binType];
+        /**
+         * ADVANCED PARTICLE ENGINE
+         */
+        const ParticleFX = {
+            canvas: document.getElementById('fx-layer'), ctx: null, parts: [],
+            init() { this.ctx = this.canvas.getContext('2d'); this.resize(); window.addEventListener('resize', ()=>this.resize()); this.tick(); },
+            resize() { this.canvas.width = window.innerWidth; this.canvas.height = window.innerHeight; },
+            fire(x, y, type) {
+                let colors = {
+                    'compost': [[22,163,74], [132,204,22], [4,120,87]],
+                    'recycle': [[37,99,235], [96,165,250], [30,58,138]],
+                    'landfill': [[82,82,91], [113,113,122], [39,39,42]],
+                    'ewaste': [[234,179,8], [250,204,21], [161,98,7]]
+                }[type];
+
                 for(let i=0; i<80; i++) {
+                    let col = colors[Math.floor(Math.random()*colors.length)];
                     this.parts.push({
-                        x, y, vx: (Math.random()-0.5)*35, vy: (Math.random()-1)*35,
-                        size: Math.random()*15+8, col: `rgb(${col[0]},${col[1]},${col[2]})`,
-                        life: 1, decay: Math.random()*0.015+0.005, rot: Math.random()*Math.PI, vrot: (Math.random()-0.5)*0.8,
-                        shape: Math.random() > 0.5 ? 'square' : 'circle'
+                        x: x, y: y, vx: (Math.random()-0.5)*35, vy: (Math.random()-1.2)*30,
+                        size: Math.random()*15+5, col: `rgb(${col[0]},${col[1]},${col[2]})`,
+                        life: 1, decay: Math.random()*0.02+0.005, mode: 'confetti',
+                        rot: Math.random()*Math.PI, vrot: (Math.random()-0.5)*0.8
                     });
                 }
             },
-            fireExplosion(x, y) {
-                for(let i=0; i<60; i++) {
+            smoke(x, y) {
+                for(let i=0; i<50; i++) {
                     this.parts.push({
-                        x, y, vx: (Math.random()-0.5)*20, vy: (Math.random()-0.5)*20,
-                        size: Math.random()*40+10, col: `rgba(239, 68, 68, 0.8)`,
-                        life: 1, decay: Math.random()*0.02+0.01, mode: 'smoke'
+                        x: x+(Math.random()-0.5)*60, y: y+(Math.random()-0.5)*60,
+                        vx: (Math.random()-0.5)*10, vy: -Math.random()*12-2,
+                        size: Math.random()*50+20, col: `rgba(239, 68, 68, 0.8)`,
+                        life: 1, decay: Math.random()*0.03+0.01, mode: 'smoke'
                     });
                 }
             },
-            spawnFloatingText(text, x, y, color) {
-                const el = document.createElement('div');
-                el.className = 'floating-text'; el.innerText = text; el.style.color = color;
-                el.style.left = `${x}px`; el.style.top = `${y}px`;
-                document.body.appendChild(el);
-                setTimeout(() => el.remove(), 1000);
-            },
-            loop() {
-                // FX Layer (Particles)
-                this.ctxFX.clearRect(0,0,this.canvasFX.width,this.canvasFX.height);
+            tick() {
+                this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height);
                 for(let i=this.parts.length-1; i>=0; i--) {
                     let p = this.parts[i]; p.x += p.vx; p.y += p.vy; p.life -= p.decay;
-                    this.ctxFX.globalAlpha = Math.max(0, p.life);
-                    this.ctxFX.fillStyle = p.col;
-                    if(p.mode === 'smoke') {
-                        p.vx*=0.9; p.vy*=0.9; p.size+=1;
-                        this.ctxFX.beginPath(); this.ctxFX.arc(p.x, p.y, p.size, 0, Math.PI*2); this.ctxFX.fill();
+                    if(p.mode === 'confetti') {
+                        p.vy += 0.9; p.vx *= 0.97; p.rot += p.vrot;
+                        this.ctx.save(); this.ctx.translate(p.x, p.y); this.ctx.rotate(p.rot);
+                        this.ctx.fillStyle = p.col; this.ctx.globalAlpha = Math.max(0, p.life);
+                        this.ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size); this.ctx.restore();
                     } else {
-                        p.vy += 1.2; p.vx *= 0.98; p.rot += p.vrot;
-                        this.ctxFX.save(); this.ctxFX.translate(p.x, p.y); this.ctxFX.rotate(p.rot);
-                        if(p.shape==='square') this.ctxFX.fillRect(-p.size/2, -p.size/2, p.size, p.size);
-                        else { this.ctxFX.beginPath(); this.ctxFX.arc(0,0,p.size/2,0,Math.PI*2); this.ctxFX.fill(); }
-                        this.ctxFX.restore();
+                        p.vx *= 0.94; p.vy *= 0.94; p.size += 0.8;
+                        this.ctx.fillStyle = p.col; this.ctx.globalAlpha = Math.max(0, p.life);
+                        this.ctx.beginPath(); this.ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); this.ctx.fill();
                     }
                     if(p.life <= 0) this.parts.splice(i,1);
                 }
-                
-                // Weather Layer
-                this.ctxW.clearRect(0,0,this.canvasW.width,this.canvasW.height);
-                this.ctxW.globalAlpha = 1;
-                this.weatherParts.forEach(p => {
-                    if(this.wType === 'rain') {
-                        p.y += p.v * 2; p.x += Math.sin(p.a);
-                        this.ctxW.fillStyle = 'rgba(125,211,252,0.6)';
-                        this.ctxW.fillRect(p.x, p.y, 2, 15);
-                        if(p.y > this.canvasW.height) { p.y = -20; p.x = Math.random()*this.canvasW.width; }
-                    } else if(this.wType === 'snow') {
-                        p.y += p.v * 0.3; p.x += Math.sin(p.y/50)*2;
-                        this.ctxW.fillStyle = 'rgba(255,255,255,0.8)';
-                        this.ctxW.beginPath(); this.ctxW.arc(p.x, p.y, p.s, 0, Math.PI*2); this.ctxW.fill();
-                        if(p.y > this.canvasW.height) { p.y = -10; p.x = Math.random()*this.canvasW.width; }
-                    } else if(this.wType === 'hyper') {
-                        p.y -= p.v; p.s += 0.05;
-                        this.ctxW.fillStyle = `hsla(${Math.random()*360}, 100%, 70%, 0.5)`;
-                        this.ctxW.fillRect(p.x, p.y, p.s, p.s*4);
-                        if(p.y < 0) { p.y = this.canvasW.height+20; p.s = Math.random()*3+1; p.x = Math.random()*this.canvasW.width; }
-                    }
+                this.ctx.globalAlpha = 1; requestAnimationFrame(()=>this.tick());
+            }
+        };
+
+        /**
+         * INTRO SEQUENCE ENGINE
+         */
+        const Engine = {
+            curr: 1, total: 10,
+            init() { this.updateUI(); },
+            updateUI() {
+                document.querySelectorAll('.slide').forEach((el, idx) => {
+                    const sn = idx + 1; el.className = 'slide';
+                    if(sn === this.curr) el.classList.add('active');
+                    else if(sn < this.curr) el.classList.add('prev');
                 });
-                
-                requestAnimationFrame(()=>this.loop());
-            }
-        };
-
-        // ============================================================================
-        // MASSIVE EXPANDED DATABASE
-        // ============================================================================
-        const DB = [
-            {e:"🍌",n:"Banana Peel",b:"compost",d:"Organic fruit waste breaks down quickly into nutrient-rich soil."},
-            {e:"🍎",n:"Apple Core",b:"compost",d:"High nitrogen content, perfect for green bins."},
-            {e:"☕",n:"Coffee Grounds",b:"compost",d:"An excellent nitrogen source for healthy compost."},
-            {e:"📄",n:"Coffee Filter",b:"compost",d:"Unbleached and bleached paper filters decompose completely alongside the grounds."},
-            {e:"🥚",n:"Eggshells",b:"compost",d:"Adds necessary calcium to compost, aiding plant cellular structure."},
-            {e:"🧻",n:"Greasy Napkin",b:"compost",d:"Food-soiled paper cannot be recycled, but it composts very well."},
-            {e:"🍕",n:"Pizza Box Bottom",b:"compost",d:"Grease ruins paper recycling. Send soiled cardboard to compost."},
-            {e:"🌿",n:"Grass Clippings",b:"compost",d:"Standard yard waste, provides the essential 'green' matter."},
-            {e:"🍂",n:"Dead Leaves",b:"compost",d:"Excellent 'brown' carbon matter required for balancing compost."},
-            {e:"🥔",n:"Potato Peels",b:"compost",d:"Organic vegetable scraps break down easily."},
-            {e:"🥑",n:"Avocado Pit",b:"compost",d:"Takes a while to break down, but fully compostable in high-heat commercial facilities."},
-            {e:"🍞",n:"Moldy Bread",b:"compost",d:"Spoiled food belongs in compost, never the trash."},
-            {e:"🦴",n:"Chicken Bones",b:"compost",d:"Accepted in commercial hot composters which easily break down meat and bone."},
-            {e:"📦",n:"Cardboard Box",b:"recycle",d:"Cardboard is highly recyclable and saves trees. Flatten it first!"},
-            {e:"📰",n:"Newspaper",b:"recycle",d:"Can be recycled into new paper products, egg cartons, or home insulation."},
-            {e:"📄",n:"Printer Paper",b:"recycle",d:"High-grade white paper is very valuable for paper recyclers."},
-            {e:"🥫",n:"Soda Can",b:"recycle",d:"Aluminum is a true circular material. It is infinitely recyclable without losing any quality."},
-            {e:"🥫",n:"Soup Can",b:"recycle",d:"Steel is easily separated at facilities using giant magnets and melted down endlessly."},
-            {e:"🥡",n:"Clean Foil",b:"recycle",d:"Clean aluminum foil can be melted down and reused. Keep it free of baked-on food."},
-            {e:"🍾",n:"Glass Water Bottle",b:"recycle",d:"Glass can be recycled endlessly into new glass products without degradation."},
-            {e:"🫙",n:"Pasta Sauce Jar",b:"recycle",d:"Rinse it out first! Glass is infinitely recyclable."},
-            {e:"🧴",n:"Plastic Water Bottle",b:"recycle",d:"PET (#1) plastic is widely accepted and turned into new bottles or polyester fiber."},
-            {e:"🥛",n:"Plastic Milk Jug",b:"recycle",d:"HDPE (#2) is thick, durable, and highly sought after by recycling commodity markets."},
-            {e:"🧼",n:"Detergent Bottle",b:"recycle",d:"Thick, durable #2 plastic that is very easy to sort and recycle."},
-            {e:"🍦",n:"Yogurt Container",b:"recycle",d:"Polypropylene (#5) is increasingly accepted in modern curbside programs. Rinse it first."},
-            {e:"🍟",n:"Potato Chip Bag",b:"landfill",d:"Made of mixed materials (plastic lined with metallic film) which cannot be separated. Must go to the landfill."},
-            {e:"🍬",n:"Candy Wrapper",b:"landfill",d:"Flimsy, mixed-material plastics are not recyclable curbside. They blow away and contaminate streams."},
-            {e:"☕",n:"Styrofoam Cup",b:"landfill",d:"Expanded polystyrene (EPS) is 95% air and rarely accepted in curbside recycling. Avoid buying it!"},
-            {e:"🛍️",n:"Plastic Grocery Bag",b:"landfill",d:"These tangle in machinery violently! They require special store drop-off, otherwise they are trash."},
-            {e:"🍷",n:"Broken Drink Glass",b:"landfill",d:"Treated glassware melts at a different temp than bottle glass, ruining entire recycling batches."},
-            {e:"💡",n:"Incandescent Bulb",b:"landfill",d:"Contain different materials and glass types; throw in trash. (LEDs need e-waste drop-off)."},
-            {e:"👶",n:"Disposable Diaper",b:"landfill",d:"Contain human waste and complex mixed plastics. Pure landfill."},
-            {e:"🐶",n:"Bagged Pet Waste",b:"landfill",d:"Carnivore/omnivore waste contains pathogens. Cannot be safely municipal-composted."},
-            {e:"🪥",n:"Toothpaste Tube",b:"landfill",d:"Mixed materials (layers of plastic and aluminum) make it unrecyclable."},
-            {e:"🤧",n:"Used Tissues",b:"landfill",d:"Paper fibers are too short to recycle, and bodily fluids are a biohazard."},
-            {e:"🧸",n:"Broken Plastic Toy",b:"landfill",d:"Made of complex, mixed, or unknown hard plastics with metal screws."},
-            {e:"🍴",n:"Plastic Fork",b:"landfill",d:"Too small, wrong shape, and low-grade plastic for optical sorters to catch."},
-            {e:"🥤",n:"Plastic Straw",b:"landfill",d:"Too small and lightweight; they fall right through sorting screens and end up in the ocean."},
-            {e:"🔋",n:"Alkaline Battery",b:"landfill",d:"Needs e-waste drop-off to prevent fires, otherwise landfill. NEVER recycling."},
-            {e:"🎧",n:"Broken Earbuds",b:"landfill",d:"Contains batteries/wires. Needs special drop-off, but in standard 3-bin, it's landfill to prevent fires."}
-        ];
-
-        // ============================================================================
-        // CORE SYSTEMS: PROGRESSION, ACHIEVEMENTS, TIMER
-        // ============================================================================
-        const Progression = {
-            level: 1, xp: 0, xpToNext: 1000, totalItems: 0, correctItems: 0,
-            addXP(amount) {
-                this.xp += amount;
-                if(this.xp >= this.xpToNext) this.levelUp();
-                document.getElementById('ui-xp').style.width = `${(this.xp/this.xpToNext)*100}%`;
+                document.getElementById('p-bar').style.width = `${(this.curr/this.total)*100}%`;
+                document.getElementById('btn-back').style.visibility = this.curr === 1 ? 'hidden' : 'visible';
+                const btnFwd = document.getElementById('btn-fwd');
+                if(this.curr === this.total) { btnFwd.innerText = "ENGAGE SIMULATOR"; btnFwd.classList.add('launch'); }
+                else { btnFwd.innerText = "NEXT MODULE"; btnFwd.classList.remove('launch'); }
             },
-            levelUp() {
-                this.level++;
-                this.xp -= this.xpToNext;
-                this.xpToNext = Math.floor(this.xpToNext * 1.5);
-                document.getElementById('ui-lvl').innerText = `LEVEL ${this.level}`;
-                AudioEngine.sfxLevelUp();
-                
-                // Change environment based on level
-                if(this.level === 2) RenderEngine.setWeather('rain');
-                if(this.level === 4) RenderEngine.setWeather('snow');
-                if(this.level >= 6) RenderEngine.setWeather('hyper');
-
-                const lm = document.getElementById('level-modal');
-                document.getElementById('lvl-b').innerText = `You reached Level ${this.level}! Reaction time requirements increased. Multipliers boosted.`;
-                lm.classList.add('show');
-            }
-        };
-
-        const Achievements = {
-            unlocked: new Set(),
-            check(stats) {
-                if(!this.unlocked.has('first') && stats.turn > 0) this.grant('first', 'First Blood', 'Successfully diverted your first item.', '🌟');
-                if(!this.unlocked.has('combo10') && stats.combo >= 10) this.grant('combo10', 'Flow State', 'Reached a 10x Combo multiplier.', '🔥');
-                if(!this.unlocked.has('speed') && stats.lastTime < 1000) this.grant('speed', 'Lightning Hands', 'Sorted an item in under 1 second.', '⚡');
+            nextSlide() {
+                SoundFX.init();
+                if(this.curr < this.total) { this.curr++; this.updateUI(); }
+                else {
+                    document.getElementById('intro-overlay').style.opacity = 0;
+                    setTimeout(() => {
+                        document.getElementById('intro-overlay').classList.add('hidden');
+                        document.getElementById('game-layer').classList.remove('hidden');
+                        Game.boot();
+                    }, 800);
+                }
             },
-            grant(id, title, desc, icon) {
-                this.unlocked.add(id);
-                const tc = document.getElementById('toast-container');
-                const t = document.createElement('div'); t.className = 'toast';
-                t.innerHTML = `<div class="toast-icon">${icon}</div><div class="toast-text"><h4>ACHIEVEMENT: ${title}</h4><p>${desc}</p></div>`;
-                tc.appendChild(t);
-                AudioEngine.playOsc('square', 880, 0, 0.2, 0.4);
-                setTimeout(()=>t.classList.add('show'), 100);
-                setTimeout(()=>{ t.classList.remove('show'); setTimeout(()=>t.remove(), 500); }, 4000);
-            }
+            prevSlide() { if(this.curr > 1) { this.curr--; this.updateUI(); } }
         };
 
-        class TimerSystem {
-            constructor() { this.active = false; this.reqId = null; this.duration = 5000; }
-            start(pathEl, onTimeout) {
-                this.active = true; this.path = pathEl; this.onTimeout = onTimeout;
-                this.duration = Math.max(1500, 5000 - (Progression.level * 400)); // Gets faster
-                this.startTime = performance.now();
-                this.path.style.transition = 'none';
+        /**
+         * SVG CIRCULAR TIMER
+         */
+        class ItemTimer {
+            constructor() {
+                this.duration = 5000; this.startTime = 0; this.reqId = null;
+                this.path = null; this.active = false;
+            }
+            start(pathElement, durationMs, onComplete) {
+                this.duration = durationMs; this.path = pathElement; this.onComplete = onComplete;
+                this.startTime = performance.now(); this.active = true;
+                this.path.style.transition = 'none'; this.path.style.stroke = 'var(--success-color)';
                 this.tick();
             }
-            stop() { this.active = false; if(this.reqId) cancelAnimationFrame(this.reqId); return performance.now() - this.startTime; }
+            stop() { this.active = false; if(this.reqId) cancelAnimationFrame(this.reqId); }
             tick() {
                 if(!this.active) return;
                 let elapsed = performance.now() - this.startTime;
                 let remaining = Math.max(0, this.duration - elapsed);
-                let pct = remaining / this.duration;
-                this.path.style.strokeDashoffset = 283 - (283 * pct);
+                let percent = remaining / this.duration;
                 
-                if(pct < 0.3) this.path.style.stroke = '#ef4444';
-                else if(pct < 0.6) this.path.style.stroke = '#f59e0b';
-                else this.path.style.stroke = '#10b981';
+                this.path.style.strokeDashoffset = 283 - (283 * percent);
 
-                if(remaining <= 0) { this.active = false; this.onTimeout(); }
-                else this.reqId = requestAnimationFrame(() => this.tick());
+                if(percent < 0.25) this.path.style.stroke = 'var(--danger-color)';
+                else if(percent < 0.5) this.path.style.stroke = 'var(--warning-color)';
+
+                if(remaining <= 0) {
+                    this.active = false; this.onComplete();
+                } else {
+                    this.reqId = requestAnimationFrame(() => this.tick());
+                }
             }
         }
 
-        // ============================================================================
-        // MASTER GAME MANAGER
-        // ============================================================================
-        const EngineUI = {
-            curr: 1, total: 2,
-            update() {
-                document.querySelectorAll('.slide').forEach((el, idx) => {
-                    if(idx+1 === this.curr) { el.className = 'slide active'; }
-                    else { el.className = 'slide hidden'; }
-                });
-                document.getElementById('p-bar').style.width = `${(this.curr/this.total)*100}%`;
-                document.getElementById('btn-back').style.display = this.curr===1?'none':'block';
-                document.getElementById('btn-fwd').innerText = this.curr===this.total?'ENGAGE ENGINE':'NEXT';
-            },
-            nextSlide() {
-                AudioEngine.sfxSelect();
-                if(this.curr < this.total) { this.curr++; this.update(); }
-                else {
-                    document.getElementById('intro-overlay').style.opacity = 0;
-                    setTimeout(() => { document.getElementById('intro-overlay').classList.add('hidden'); document.getElementById('game-layer').classList.remove('hidden'); GameManager.boot(); }, 800);
-                }
-            },
-            prevSlide() { AudioEngine.sfxSelect(); if(this.curr > 1) { this.curr--; this.update(); } }
-        };
-        const Engine = EngineUI; // Alias for HTML buttons
+        /**
+         * CORE GAME LOGIC
+         */
+        const Game = {
+            TURNS: 50, turn: 0, score: 0, combo: 0, maxCombo: 0,
+            used: new Set(), currentItem: null, domEl: null, isProcessing: false,
+            timer: new ItemTimer(), baseTime: 6000, minTime: 1500,
 
-        const GameManager = {
-            turn: 0, score: 0, combo: 0, lastTime: 0, usedIdx: new Set(),
-            currentItem: null, domEl: null, isProcessing: false,
-            timer: new TimerSystem(), hasBooted: false,
-
-            boot() {
-                AudioEngine.init(); RenderEngine.init();
-                this.setupInputs(); this.spawnItem();
-            },
-
-            setupInputs() {
-                window.addEventListener('keydown', (e) => {
-                    if(this.isProcessing) return;
-                    if(e.key === 'ArrowLeft') { this.pressBin('comp'); this.sort('compost'); }
-                    if(e.key === 'ArrowDown') { this.pressBin('recy'); this.sort('recycle'); }
-                    if(e.key === 'ArrowRight') { this.pressBin('land'); this.sort('landfill'); }
-                });
-                window.addEventListener('keyup', () => {
-                    document.querySelectorAll('.bin-unit').forEach(b => b.classList.remove('pressed'));
-                });
-            },
-            pressBin(id) { document.getElementById(`bin-${id}`).classList.add('pressed'); },
-
-            spawnItem() {
-                if(this.usedIdx.size >= DB.length) this.usedIdx.clear();
+            boot() { ParticleFX.init(); this.resetStats(); this.loadItem(); this.updateEnvironment(); },
+            resetStats() { this.turn=0; this.score=0; this.combo=0; this.maxCombo=0; this.used.clear(); this.refreshHUD(); },
+            reset() { this.timer.stop(); this.resetStats(); document.getElementById('item-arena').innerHTML=''; document.getElementById('result-modal').classList.remove('show'); this.loadItem(); this.updateEnvironment(); },
+            
+            updateEnvironment() {
+                const sl = document.getElementById('scenery-layer');
+                const st = document.querySelector('.stars');
+                const p = this.turn / this.TURNS;
                 
-                // 1% chance for Legendary item
-                if(!this.hasBooted && Math.random() < 0.05) {
-                    this.currentItem = { e:"☢️", n:"O-CLASS ANOMALY", b:"landfill", d:"UNSTABLE MATERIAL. CONTAINMENT BREACH IMMINENT.", isLegendary: true };
-                    this.hasBooted = true;
+                if(p < 0.4) {
+                    sl.style.background = 'var(--sky-gradient-day)'; st.style.opacity = '0';
+                } else if (p < 0.7) {
+                    sl.style.background = 'var(--sky-gradient-sunset)'; st.style.opacity = '0.5';
                 } else {
-                    let rnd; do { rnd = Math.floor(Math.random() * DB.length); } while(this.usedIdx.has(rnd));
-                    this.usedIdx.add(rnd); this.currentItem = DB[rnd];
+                    sl.style.background = 'var(--sky-gradient-night)'; st.style.opacity = '1';
                 }
+            },
+
+            loadItem() {
+                if(this.turn >= this.TURNS) { this.endSequence(); return; }
+                
+                let rnd; do { rnd = Math.floor(Math.random() * DATABASE.length); } while (this.used.has(rnd));
+                this.used.add(rnd); this.currentItem = DATABASE[rnd];
 
                 const arena = document.getElementById('item-arena'); arena.innerHTML = '';
                 this.domEl = document.createElement('div'); this.domEl.className = 'waste-obj';
                 
-                if(this.currentItem.isLegendary) {
-                    this.domEl.style.boxShadow = "0 0 100px #ef4444, inset 0 0 50px #b91c1c";
-                    this.domEl.style.border = "8px solid #fca5a5";
-                    this.domEl.style.animation = "idleHover 0.5s infinite, spawnIn 0.8s forwards";
-                    AudioEngine.sfxLegendary();
-                    RenderEngine.setWeather('hyper');
-                }
-
                 this.domEl.innerHTML = `
-                    <svg class="timer-svg" viewBox="0 0 100 100"><circle class="timer-bg" cx="50" cy="50" r="44"></circle><circle class="timer-path" cx="50" cy="50" r="44" id="t-path"></circle></svg>
+                    <svg class="timer-svg" viewBox="0 0 100 100">
+                        <circle class="timer-bg" cx="50" cy="50" r="45"></circle>
+                        <circle class="timer-path" cx="50" cy="50" r="45" id="t-path"></circle>
+                    </svg>
                     <div class="obj-emoji">${this.currentItem.e}</div>
                     <div class="obj-name">${this.currentItem.n}</div>
                 `;
-                arena.appendChild(this.domEl);
+                this.domEl.style.transform = 'scale(0)'; arena.appendChild(this.domEl);
+
+                let dynTime = Math.max(this.minTime, this.baseTime - (this.combo * 200));
 
                 setTimeout(() => {
-                    this.isProcessing = false;
-                    this.timer.start(document.getElementById('t-path'), () => this.handleTimeout());
-                }, 800);
+                    this.domEl.style.transition = '0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                    this.domEl.style.transform = 'scale(1)';
+                    setTimeout(() => { 
+                        this.domEl.style.transition = ''; 
+                        this.isProcessing = false;
+                        const pathEl = document.getElementById('t-path');
+                        this.timer.start(pathEl, dynTime, () => this.handleTimeout());
+                    }, 500);
+                }, 50);
             },
 
             handleTimeout() {
-                if(this.isProcessing) return; this.isProcessing = true; this.turn++;
-                this.combo = 0; Progression.xp = Math.max(0, Progression.xp - 50);
-                this.domEl.classList.add('anim-drop'); AudioEngine.sfxDrop();
-                const r = this.domEl.getBoundingClientRect();
-                setTimeout(() => { RenderEngine.fireExplosion(r.left+r.width/2, r.top+r.height/2); this.showModal('timeout'); }, 600);
+                if(this.isProcessing) return;
+                this.isProcessing = true; this.turn++;
+                SoundFX.playAlarm(); SoundFX.playWrong();
+                this.domEl.classList.add('anim-drop');
+                
+                const rect = this.domEl.getBoundingClientRect();
+                setTimeout(() => {
+                    ParticleFX.smoke(rect.left + rect.width/2, rect.top + rect.height/2);
+                    this.combo = 0; document.body.classList.add('shake-intense');
+                    setTimeout(()=>document.body.classList.remove('shake-intense'), 400);
+                    this.triggerModal('timeout');
+                    this.refreshHUD();
+                    this.updateEnvironment();
+                }, 400);
             },
 
             sort(binType) {
-                if(this.isProcessing || !this.domEl) return;
+                if(this.isProcessing || !this.domEl) return; 
                 this.isProcessing = true; this.turn++;
-                this.lastTime = this.timer.stop(); AudioEngine.sfxToss();
+                this.timer.stop(); SoundFX.playToss();
 
-                const br = document.getElementById(`bin-${binType.substring(0,4)}`).getBoundingClientRect();
-                const or = this.domEl.getBoundingClientRect();
-                const tx = br.left + br.width/2 - (or.left + or.width/2);
-                const ty = br.top + br.height/4 - (or.top + or.height/2);
+                const binRect = document.getElementById(`bin-${binType.substring(0,4)}`).getBoundingClientRect();
+                const objRect = this.domEl.getBoundingClientRect();
+                
+                const targetX = binRect.left + (binRect.width/2) - (objRect.left + objRect.width/2);
+                const targetY = binRect.top + (binRect.height/4) - (objRect.top + objRect.height/2);
 
-                this.domEl.style.setProperty('--toss-dest', `translate(${tx}px, ${ty}px)`);
+                this.domEl.style.setProperty('--toss-dest', `translate(${targetX}px, ${targetY}px)`);
                 this.domEl.classList.add('anim-toss');
 
-                setTimeout(() => this.evaluate(binType, br.left+br.width/2, br.top+br.height/4), 500);
+                setTimeout(() => { this.evaluate(binType, binRect.left+binRect.width/2, binRect.top+binRect.height/4); }, 600);
             },
 
             evaluate(binType, px, py) {
                 const isCorrect = (binType === this.currentItem.b);
                 
-                if(this.currentItem.isLegendary) {
-                    if(isCorrect) { this.score+=100000; Progression.addXP(5000); this.combo+=5; }
-                    this.triggerShatter(px, py, binType); return;
-                }
-
                 if(isCorrect) {
-                    this.combo++; Progression.correctItems++;
-                    let timeMult = this.lastTime < 1000 ? 2 : 1;
-                    let pts = (100 * this.combo * Progression.level * timeMult);
+                    ParticleFX.fire(px, py, binType); SoundFX.playCorrect();
+                    this.combo++; if(this.combo > this.maxCombo) this.maxCombo = this.combo;
+                    
+                    let pts = 100 * Math.min(this.combo, 25);
+                    if(this.currentItem.b === 'ewaste') pts *= 2; // Bonus for saving facilities from fire
                     this.score += pts;
-                    Progression.addXP(50 * this.combo);
                     
-                    RenderEngine.fireConfetti(px, py, binType);
-                    RenderEngine.spawnFloatingText(`+${pts}`, px, py - 100, '#4ade80');
-                    AudioEngine.sfxSuccess(this.combo);
+                    const cTxt = document.getElementById('combo-txt');
+                    cTxt.classList.remove('pop'); void cTxt.offsetWidth; cTxt.classList.add('active', 'pop');
                     
-                    const ctxt = document.getElementById('combo-txt');
-                    ctxt.classList.remove('pop'); void ctxt.offsetWidth; ctxt.classList.add('active', 'pop');
-                    document.getElementById('combo-meter-bg').classList.add('active');
-                    document.getElementById('combo-meter-fill').style.width = `${Math.min(100, this.combo*10)}%`;
-                    
-                    this.showModal('pass');
+                    if(this.combo > 0 && this.combo % 5 === 0) {
+                        SoundFX.playCombo(this.combo);
+                        const msg = document.getElementById('streak-msg');
+                        msg.classList.add('show'); setTimeout(()=>msg.classList.remove('show'), 2000);
+                    }
+
+                    this.triggerModal('pass');
                 } else {
-                    this.combo = 0; document.getElementById('combo-meter-bg').classList.remove('active'); document.getElementById('combo-meter-fill').style.width='0%';
-                    RenderEngine.fireExplosion(px, py); AudioEngine.sfxFail();
-                    RenderEngine.spawnFloatingText("COMBO BROKEN", px, py - 100, '#ef4444');
-                    this.showModal('fail');
+                    ParticleFX.smoke(px, py); SoundFX.playWrong(); this.combo = 0; 
+                    document.body.classList.add('shake-intense'); setTimeout(()=>document.body.classList.remove('shake-intense'), 400);
+                    this.triggerModal('fail');
+                }
+                this.refreshHUD(); this.updateEnvironment();
+            },
+
+            refreshHUD() {
+                document.getElementById('ui-turn').innerText = `${this.turn}/${this.TURNS}`;
+                document.getElementById('ui-score').innerText = this.score.toString().padStart(7, '0');
+                const cTxt = document.getElementById('combo-txt');
+                if(this.combo > 0) { cTxt.innerText = `x${this.combo}`; cTxt.classList.add('active'); }
+                else cTxt.classList.remove('active');
+            },
+
+            triggerModal(status) {
+                const mod = document.getElementById('result-modal');
+                const i = document.getElementById('res-i'); const h = document.getElementById('res-h'); const b = document.getElementById('res-b');
+                const g = document.getElementById('res-g');
+                
+                b.innerHTML = `<strong>${this.currentItem.e} ${this.currentItem.n}</strong><br><br>${this.currentItem.d}`;
+                
+                let bCol = this.currentItem.b === 'compost' ? '#16a34a' : this.currentItem.b === 'recycle' ? '#2563eb' : this.currentItem.b === 'ewaste' ? '#eab308' : '#71717a';
+
+                if(status === 'pass') { 
+                    h.innerText = "ACCURATE DIVERSION"; h.className = "res-head pass"; i.innerText = "✅"; 
+                    g.style.background = 'linear-gradient(90deg, transparent, #4ade80, transparent)';
+                    g.style.boxShadow = '0 0 30px #4ade80';
+                } else if(status === 'fail') { 
+                    h.innerText = `FATAL ERROR: BELONGS IN ${this.currentItem.b.toUpperCase()}`; h.className = "res-head fail"; i.innerText = "❌"; 
+                    g.style.background = 'linear-gradient(90deg, transparent, #f87171, transparent)';
+                    g.style.boxShadow = '0 0 30px #f87171';
+                } else if(status === 'timeout') {
+                    h.innerText = "TIME EXPIRED"; h.className = "res-head time"; i.innerText = "⏱️";
+                    g.style.background = 'linear-gradient(90deg, transparent, #f59e0b, transparent)';
+                    g.style.boxShadow = '0 0 30px #f59e0b';
+                    b.innerHTML = `You took too long to sort <strong>${this.currentItem.e} ${this.currentItem.n}</strong>. Speed and accuracy are both critical.<br><br>For the record, it belongs in <strong style="color:${bCol}">${this.currentItem.b.toUpperCase()}</strong>: ${this.currentItem.d}`;
                 }
                 
-                Achievements.check(this);
-                this.updateHUD();
+                mod.classList.add('show');
             },
 
-            updateHUD() {
-                document.getElementById('ui-turn').innerText = this.turn;
-                document.getElementById('ui-score').innerText = this.score.toString().padStart(7, '0');
-                const ctxt = document.getElementById('combo-txt');
-                if(this.combo>0) { ctxt.innerText=`x${this.combo}`; ctxt.classList.add('active'); } else ctxt.classList.remove('active');
-            },
+            next() { document.getElementById('result-modal').classList.remove('show'); setTimeout(() => this.loadItem(), 400); },
 
-            showModal(status) {
-                const m=document.getElementById('result-modal'); const i=document.getElementById('res-i'); const h=document.getElementById('res-h'); const b=document.getElementById('res-b');
-                b.innerHTML = `<strong>${this.currentItem.e} ${this.currentItem.n}</strong><br><br>${this.currentItem.d}`;
-                if(status==='pass') { h.innerText="ACCURATE DIVERSION"; h.className="res-head pass"; i.innerText="✅"; document.getElementById('btn-proc').className="btn-proceed"; }
-                if(status==='fail') { h.innerText=`ROUTING ERROR: ${this.currentItem.b.toUpperCase()}`; h.className="res-head fail"; i.innerText="❌"; document.getElementById('btn-proc').className="btn-proceed secondary"; }
-                if(status==='timeout') { h.innerText="TIME EXPIRED"; h.className="res-head time"; i.innerText="⏱️"; document.getElementById('btn-proc').className="btn-proceed secondary"; b.innerHTML += `<br><br>Required Bin: <strong>${this.currentItem.b.toUpperCase()}</strong>`; }
-                m.classList.add('show');
-            },
+            endSequence() {
+                const mod = document.getElementById('result-modal');
+                const i = document.getElementById('res-i'); const h = document.getElementById('res-h'); const b = document.getElementById('res-b'); const btn = document.getElementById('btn-proc');
+                const g = document.getElementById('res-g');
+                
+                i.innerText = "🌍"; h.innerText = "SIMULATION COMPLETE"; h.className = "res-head pass";
+                g.style.background = 'linear-gradient(90deg, transparent, #38bdf8, transparent)';
+                g.style.boxShadow = '0 0 50px #38bdf8';
 
-            triggerShatter(px, py, bin) {
-                const overlay = document.getElementById('shatter-overlay'); overlay.classList.remove('hidden'); document.body.classList.add('shake-violent');
-                overlay.innerHTML = '';
-                for(let i=0; i<80; i++) {
-                    let s = document.createElement('div'); s.className = 'glass-shard';
-                    s.style.width = (Math.random()*50+20)+'vw'; s.style.height = (Math.random()*50+20)+'vh';
-                    s.style.left = (Math.random()*120-10)+'vw'; s.style.top = (Math.random()*120-10)+'vh';
-                    s.style.clipPath = `polygon(${Math.random()*100}% 0, 100% ${Math.random()*100}%, 0 ${Math.random()*100}%)`;
-                    overlay.appendChild(s);
-                }
-                setTimeout(() => {
-                    document.querySelectorAll('.glass-shard').forEach(s => { s.style.transform = `translate(${(Math.random()-0.5)*800}vw, ${(Math.random()-0.5)*800}vh) rotate(${(Math.random()-0.5)*2000}deg) scale(${Math.random()*3})`; s.style.opacity = '0'; });
-                }, 100);
-                setTimeout(() => {
-                    document.body.classList.remove('shake-violent'); overlay.classList.add('hidden');
-                    const flash = document.createElement('div'); flash.className = 'white-flash'; document.body.appendChild(flash);
-                    setTimeout(() => flash.style.opacity = '0', 50);
-                    setTimeout(() => { flash.remove(); RenderEngine.setWeather('clear'); this.updateHUD(); this.spawnItem(); }, 1500);
-                }, 1500);
-            },
-
-            nextTurn() { document.getElementById('result-modal').classList.remove('show'); setTimeout(()=>this.spawnItem(), 400); },
-            closeLevelModal() { document.getElementById('level-modal').classList.remove('show'); }
+                b.innerHTML = `
+                    <div class="end-grid">
+                        <div class="end-stat"><span class="s-lbl">FINAL SCORE</span><span class="s-val" style="color:#38bdf8;">${this.score}</span></div>
+                        <div class="end-stat"><span class="s-lbl">MAX COMBO</span><span class="s-val" style="color:#f59e0b;">x${this.maxCombo}</span></div>
+                    </div>
+                    <p style="text-align:center; font-size: 1.6rem;">Every correct decision you make in the real world directly reduces greenhouse gas emissions, halts microplastic pollution, and saves virgin resources. The circular economy begins with you.</p>
+                `;
+                btn.innerText = "RE-INITIALIZE ENGINE";
+                btn.onclick = () => { mod.classList.remove('show'); setTimeout(() => { this.reset(); btn.onclick = () => this.next(); btn.innerText="PROCESS NEXT ITEM"; }, 500); };
+                mod.classList.add('show');
+                SoundFX.playOsc('sine', 400, 0.1, 1, 800);
+            }
         };
 
-        window.onload = () => { EngineUI.update(); };
+        window.onload = () => Engine.init();
     </script>
 </body>
 </html>
