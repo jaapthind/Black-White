@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Global Climate Action: Circular Economy Engine Ultra v5.0 LIQUID MAX</title>
+    <title>Global Climate Action: Circular Economy Engine Ultra v6.0 LIQUID MAX</title>
     <style>
         /* ==========================================================================
            1. ADVANCED RESPONSIVE CSS & CORE VARIABLES
@@ -120,7 +120,6 @@
             transition: background 4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* Ambient Rainbow Blobs for Background */
         .ambient-blob {
             position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.4;
             animation: blobFloat 20s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
@@ -240,7 +239,6 @@
         .slide p { font-size: clamp(0.9rem, 2.2vw, 1.4rem); line-height: 1.6; color: #e2e8f0; margin-bottom: clamp(10px, 2vw, 20px); text-shadow: 0 2px 4px rgba(0,0,0,0.8);}
         .slide strong { color: #fff; background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2);}
         
-        /* ADAPTIVE INFO GRID */
         .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(clamp(150px, 40vw, 300px), 1fr)); gap: clamp(10px, 3vw, 20px); margin-top: clamp(15px, 4vw, 30px); }
         .info-card { 
             background: rgba(0,0,0,0.4); padding: clamp(15px, 3vw, 25px); border-radius: 16px; 
@@ -300,7 +298,6 @@
         }
         @keyframes pulseText { 0%, 100% { opacity: 0.8; transform: scale(1); } 50% { opacity: 1; transform: scale(1.05); text-shadow: 0 0 40px #ef4444, 0 0 15px #fff; } }
 
-        /* History Log Sidebar - Hidden on extreme mobile */
         #history-log {
             position: absolute; top: clamp(80px, 15vh, 120px); left: clamp(10px, 2vw, 20px); width: clamp(120px, 20vw, 220px); max-height: 40vh;
             display: flex; flex-direction: column; gap: 5px; z-index: 40; pointer-events: none;
@@ -322,23 +319,35 @@
             display: flex; justify-content: center; align-items: center; z-index: 200;
         }
 
-        .waste-obj {
-            position: absolute; width: clamp(80px, 35vmin, 260px); height: clamp(80px, 35vmin, 260px);
-            border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center;
+        /* RESTRUCTURED: The container holds both the visual object and the text outside it to prevent clipping */
+        .waste-container {
+            position: absolute; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
             cursor: pointer; animation: floatObj 3s ease-in-out infinite; transform-origin: center;
         }
-        .waste-obj:active { transform: scale(0.9) !important; animation: none; }
+        .waste-container:active { transform: scale(0.9) !important; animation: none; }
+
+        .waste-obj {
+            position: relative; 
+            width: clamp(70px, 20vmin, 160px); 
+            height: clamp(70px, 20vmin, 160px);
+            border-radius: 50%; display: flex; justify-content: center; align-items: center;
+        }
 
         .timer-svg { position: absolute; top: -10%; left: -10%; width: 120%; height: 120%; transform: rotate(-90deg); z-index: -1; pointer-events: none; }
         .timer-bg { fill: none; stroke: rgba(0,0,0,0.3); stroke-width: clamp(3px, 1vmin, 8px); }
         .timer-path { fill: none; stroke: var(--success-color); stroke-width: clamp(3px, 1vmin, 8px); stroke-dasharray: 283; stroke-dashoffset: 0; transition: stroke-dashoffset 0.1s linear, stroke 0.3s ease; stroke-linecap: round; filter: drop-shadow(0 0 10px var(--success-color)); }
 
-        .obj-emoji { font-size: clamp(2rem, 15vmin, 7rem); filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5)); margin-bottom: 2%; z-index: 2; pointer-events: none; }
+        .obj-emoji { font-size: clamp(2rem, 10vmin, 5rem); filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5)); z-index: 2; pointer-events: none; }
+        
+        /* UNCLIPPED NAME TAG */
         .obj-name {
-            position: absolute; bottom: -10%; background: rgba(0,0,0,0.8); color: #fff;
-            padding: clamp(4px, 1vmin, 10px) clamp(8px, 2vmin, 20px); border-radius: 8px; font-weight: 800;
-            font-size: clamp(0.5rem, 2.5vmin, 1.1rem); white-space: nowrap; backdrop-filter: blur(5px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.2); text-transform: uppercase; z-index: 3; pointer-events: none;
+            margin-top: clamp(10px, 2vmin, 20px);
+            background: rgba(0,0,0,0.85); color: #fff;
+            padding: clamp(6px, 1.5vmin, 12px) clamp(10px, 2.5vmin, 24px); border-radius: 8px; font-weight: 800;
+            font-size: clamp(0.7rem, 2vmin, 1.2rem); white-space: nowrap; backdrop-filter: blur(5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.3); 
+            text-transform: uppercase; z-index: 10; pointer-events: none;
         }
 
         @keyframes floatObj { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-15px) rotate(4deg); } }
@@ -390,14 +399,13 @@
         .bin-logo { width: 40%; height: 40%; opacity: 0.9; margin-bottom: 10%; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.8)); pointer-events: none;}
         .bin-txt { font-size: clamp(0.45rem, 1.2vw, 1.2rem); font-weight: 900; color: #fff; text-transform: uppercase; letter-spacing: 0.5px; text-shadow: 0 2px 4px rgba(0,0,0,1); text-align: center; pointer-events: none;}
 
-        /* MEDIA QUERIES FOR TRUE ADAPTIVE SCALING (NOT CRAMPING) */
+        /* MEDIA QUERIES FOR EXTREME MOBILE SCALING */
         @media (max-width: 600px) {
             .hud-bar { flex-direction: column; align-items: center; gap: 8px; }
             .stat-block { width: 100%; flex-direction: row; justify-content: space-between; padding: 6px 12px; }
             .combo-center { flex-direction: row; justify-content: space-around; width: 100%; }
-            #history-log { display: none; } /* Free up space */
+            #history-log { display: none; }
             
-            /* Morph 4-cols into 2x2 grid to prevent microscopic bins on very small screens */
             #bins-dock { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); height: clamp(30vh, 40vh, 45vh); gap: clamp(5px, 2vw, 15px); padding: 0 clamp(5px, 2vw, 15px);}
             .bin-unit { max-width: 140px; height: clamp(70px, 15vh, 140px); justify-self: center;}
             .bin-logo { width: 35%; height: 35%; margin-bottom: 5%;}
@@ -405,7 +413,11 @@
             
             .reset-zone { top: 10px; right: 10px; bottom: auto; }
             #done-instruction { top: 12vh; }
-            #item-arena { top: 12vh; height: clamp(20vh, 30vh, 35vh); }
+            
+            #item-arena { top: 14vh; height: clamp(20vh, 30vh, 35vh); }
+            .waste-obj { width: clamp(60px, 18vmin, 120px); height: clamp(60px, 18vmin, 120px); }
+            .obj-emoji { font-size: clamp(1.8rem, 8vmin, 3.5rem); }
+            .obj-name { font-size: 0.65rem; padding: 4px 10px; margin-top: 10px; }
         }
 
         /* ==========================================================================
@@ -463,7 +475,6 @@
         <div class="intro-panel liquid-glass">
             <div class="progress-track"><div class="progress-fill" id="p-bar"></div></div>
             <div class="slide-viewport">
-                
                 <div class="slide active" id="slide-1">
                     <div class="scroll-content">
                         <span class="tag-pill">The Core Crisis</span>
@@ -584,7 +595,7 @@
          * MASSIVE ITEM DATABASE (Expanded heavily to pad length and complexity)
          */
         const DATABASE = [
-            // ORIGINAL COMPOST
+            // ================= COMPOST =================
             {e:"🍌",n:"Banana Peel",b:"compost",d:"Organic fruit waste breaks down quickly into nutrient-rich soil. Prevents methane creation."}, 
             {e:"🍎",n:"Apple Core",b:"compost",d:"High nitrogen content, perfect for green bins."}, 
             {e:"☕",n:"Coffee Grounds",b:"compost",d:"An excellent nitrogen source for healthy compost."}, 
@@ -660,7 +671,6 @@
             {e:"🌮",n:"Taco Shell",b:"compost",d:"Corn product."}, 
             {e:"🥞",n:"Pancake Scraps",b:"compost",d:"Food."}, 
             {e:"🥣",n:"Oatmeal Leftovers",b:"compost",d:"Grains."},
-            // EXPANDED COMPOST
             {e:"🥭",n:"Mango Peel",b:"compost",d:"Organic fruit waste."},
             {e:"🍈",n:"Honeydew Rind",b:"compost",d:"Organic fruit waste."},
             {e:"🍈",n:"Cantaloupe Rind",b:"compost",d:"Organic fruit waste."},
@@ -736,8 +746,26 @@
             {e:"🥩",n:"Spoiled Pork",b:"compost",d:"Commercial composters handle meat."},
             {e:"🍗",n:"Turkey Bones",b:"compost",d:"Commercial composters handle bone."},
             {e:"🥓",n:"Bacon Grease",b:"compost",d:"Commercial composters handle grease."},
+            {e:"🥜",n:"Walnut Shells",b:"compost",d:"Organic nut casing."},
+            {e:"🥜",n:"Pecan Shells",b:"compost",d:"Organic nut casing."},
+            {e:"🥜",n:"Pistachio Shells",b:"compost",d:"Organic nut casing."},
+            {e:"🥜",n:"Almond Skins",b:"compost",d:"Organic matter."},
+            {e:"🥜",n:"Sunflower Seeds",b:"compost",d:"Organic matter."},
+            {e:"🥜",n:"Pumpkin Seeds",b:"compost",d:"Organic matter."},
+            {e:"☕",n:"Used Coffee Pod (Paper)",b:"compost",d:"Paper pods break down entirely."},
+            {e:"🍵",n:"Loose Leaf Tea",b:"compost",d:"Organic matter."},
+            {e:"🧻",n:"Soiled Tissue",b:"compost",d:"Paper fibers break down in compost."},
+            {e:"🧻",n:"Soiled Paper Towel",b:"compost",d:"Paper fibers break down in compost."},
+            {e:"🌾",n:"Hops (Brewing Waste)",b:"compost",d:"Organic brewing waste."},
+            {e:"🌾",n:"Grains (Brewing Waste)",b:"compost",d:"Organic brewing waste."},
+            {e:"🪵",n:"Bamboo Skewer",b:"compost",d:"Untreated wood."},
+            {e:"🪵",n:"Toothpick",b:"compost",d:"Untreated wood."},
+            {e:"🪴",n:"Potting Soil",b:"compost",d:"Can be returned to the compost pile."},
+            {e:"🌲",n:"Fallen Branch",b:"compost",d:"Organic yard waste."},
+            {e:"🌺",n:"Wilted Rose",b:"compost",d:"Organic plant matter."},
+            {e:"🌼",n:"Dandelion",b:"compost",d:"Organic plant matter."},
 
-            // ORIGINAL RECYCLE
+            // ================= RECYCLE =================
             {e:"📦",n:"Cardboard Box",b:"recycle",d:"Cardboard is highly recyclable and saves trees. Flatten it first!"}, 
             {e:"📰",n:"Newspaper",b:"recycle",d:"Can be recycled into new paper products or home insulation."}, 
             {e:"📄",n:"Printer Paper",b:"recycle",d:"High-grade white paper is very valuable for paper recyclers."}, 
@@ -823,7 +851,6 @@
             {e:"🫙",n:"Salsa Jar",b:"recycle",d:"Glass."}, 
             {e:"🥫",n:"Baked Beans Can",b:"recycle",d:"Metal."}, 
             {e:"📦",n:"Tissue Box",b:"recycle",d:"Paperboard (tear out the plastic slit first)."},
-            // EXPANDED RECYCLE
             {e:"📦",n:"Amazon Box",b:"recycle",d:"Cardboard is highly recyclable. Remove tape if possible."},
             {e:"📦",n:"Appliance Box",b:"recycle",d:"Cardboard."},
             {e:"📦",n:"Gift Box",b:"recycle",d:"Paperboard."},
@@ -898,8 +925,32 @@
             {e:"🛢️",n:"Coconut Oil Tin",b:"recycle",d:"Metal."},
             {e:"🛢️",n:"Tea Tin",b:"recycle",d:"Metal."},
             {e:"🛢️",n:"Cookie Tin",b:"recycle",d:"Metal."},
+            {e:"📦",n:"Electronics Box",b:"recycle",d:"Cardboard."},
+            {e:"📦",n:"Software Box",b:"recycle",d:"Cardboard/Paperboard."},
+            {e:"📦",n:"Toy Box",b:"recycle",d:"Cardboard (remove plastic windows)."},
+            {e:"📄",n:"Flyer",b:"recycle",d:"Paper."},
+            {e:"📄",n:"Menu",b:"recycle",d:"Paper."},
+            {e:"📄",n:"Letter",b:"recycle",d:"Paper."},
+            {e:"📄",n:"Bill",b:"recycle",d:"Paper."},
+            {e:"📄",n:"Bank Statement",b:"recycle",d:"Paper."},
+            {e:"📄",n:"Tax Form",b:"recycle",d:"Paper."},
+            {e:"✉️",n:"Window Envelope",b:"recycle",d:"Paper."},
+            {e:"📖",n:"Catalog",b:"recycle",d:"Paper."},
+            {e:"📖",n:"Almanac",b:"recycle",d:"Paper."},
+            {e:"📖",n:"Dictionary",b:"recycle",d:"Paper."},
+            {e:"📖",n:"Encyclopedia",b:"recycle",d:"Paper."},
+            {e:"🥫",n:"Coffee Can",b:"recycle",d:"Metal."},
+            {e:"🥫",n:"Shortening Can",b:"recycle",d:"Metal."},
+            {e:"🥫",n:"Powdered Milk Can",b:"recycle",d:"Metal."},
+            {e:"🥡",n:"Baking Tin",b:"recycle",d:"Aluminum."},
+            {e:"🍾",n:"Syrup Bottle",b:"recycle",d:"Glass or Plastic."},
+            {e:"🍾",n:"Vinegar Bottle",b:"recycle",d:"Glass or Plastic."},
+            {e:"🍾",n:"Soy Sauce Bottle",b:"recycle",d:"Glass or Plastic."},
+            {e:"🫙",n:"Gravy Jar",b:"recycle",d:"Glass."},
+            {e:"🫙",n:"Relish Jar",b:"recycle",d:"Glass."},
+            {e:"🫙",n:"Caper Jar",b:"recycle",d:"Glass."},
 
-            // ORIGINAL LANDFILL
+            // ================= LANDFILL =================
             {e:"🍟",n:"Potato Chip Bag",b:"landfill",d:"Made of mixed materials (plastic lined with metallic film) which cannot be separated."}, 
             {e:"🍬",n:"Candy Wrapper",b:"landfill",d:"Flimsy, mixed-material plastics are not recyclable curbside. They blow away and contaminate streams."}, 
             {e:"☕",n:"Styrofoam Cup",b:"landfill",d:"Expanded polystyrene (EPS) is 95% air and rarely accepted in curbside recycling."}, 
@@ -972,7 +1023,6 @@
             {e:"🩹",n:"Medical Tape",b:"landfill",d:"Adhesive and fabric."}, 
             {e:"🧪",n:"Marker Pen",b:"landfill",d:"Mixed plastic and ink core."}, 
             {e:"📎",n:"Binder Clip",b:"landfill",d:"Metal (too small to sort)."},
-            // EXPANDED LANDFILL
             {e:"🍟",n:"Tortilla Chip Bag",b:"landfill",d:"Mixed materials."},
             {e:"🍟",n:"Pretzel Bag",b:"landfill",d:"Mixed materials."},
             {e:"🍟",n:"Popcorn Bag",b:"landfill",d:"Mixed materials."},
@@ -1046,8 +1096,30 @@
             {e:"🧷",n:"Barrette",b:"landfill",d:"Mixed materials."},
             {e:"🪒",n:"Razor Blade",b:"landfill",d:"Sharp metal hazard."},
             {e:"🧯",n:"Matchbook",b:"landfill",d:"Mixed materials."},
+            {e:"👕",n:"Torn Shirt",b:"landfill",d:"Textiles tangle machinery."},
+            {e:"👖",n:"Ripped Jeans",b:"landfill",d:"Textiles tangle machinery."},
+            {e:"👗",n:"Old Dress",b:"landfill",d:"Textiles tangle machinery."},
+            {e:"👙",n:"Old Swimsuit",b:"landfill",d:"Textiles tangle machinery."},
+            {e:"🩱",n:"Leotard",b:"landfill",d:"Textiles tangle machinery."},
+            {e:"🩲",n:"Old Underwear",b:"landfill",d:"Textiles tangle machinery."},
+            {e:"🩳",n:"Gym Shorts",b:"landfill",d:"Textiles tangle machinery."},
+            {e:"👔",n:"Old Tie",b:"landfill",d:"Textiles tangle machinery."},
+            {e:"🧥",n:"Torn Coat",b:"landfill",d:"Textiles tangle machinery."},
+            {e:"🧣",n:"Old Scarf",b:"landfill",d:"Textiles tangle machinery."},
+            {e:"🧤",n:"Old Gloves",b:"landfill",d:"Textiles tangle machinery."},
+            {e:"🧦",n:"Mismatched Sock",b:"landfill",d:"Textiles tangle machinery."},
+            {e:"👞",n:"Old Shoe",b:"landfill",d:"Complex mixed materials."},
+            {e:"👟",n:"Old Cleats",b:"landfill",d:"Complex mixed materials."},
+            {e:"🥾",n:"Worn Boot",b:"landfill",d:"Complex mixed materials."},
+            {e:"🥿",n:"Old Flats",b:"landfill",d:"Complex mixed materials."},
+            {e:"👠",n:"Broken Heel",b:"landfill",d:"Complex mixed materials."},
+            {e:"👡",n:"Broken Sandal",b:"landfill",d:"Complex mixed materials."},
+            {e:"👢",n:"Old Rainboot",b:"landfill",d:"Complex mixed materials."},
+            {e:"🧳",n:"Broken Suitcase",b:"landfill",d:"Complex mixed materials."},
+            {e:"🎒",n:"Torn Backpack",b:"landfill",d:"Complex mixed materials."},
+            {e:"👜",n:"Old Purse",b:"landfill",d:"Complex mixed materials."},
 
-            // ORIGINAL E-WASTE
+            // ================= E-WASTE =================
             {e:"🔋",n:"Alkaline Battery",b:"ewaste",d:"Needs e-waste drop-off to prevent fires. NEVER goes in standard recycling."}, 
             {e:"📱",n:"Broken Smartphone",b:"ewaste",d:"Contains lithium-ion battery, gold, copper, and glass. High fire risk if crushed in a garbage truck."}, 
             {e:"💻",n:"Broken Laptop",b:"ewaste",d:"Massive source of e-waste. Must be professionally dismantled to recover heavy metals."}, 
@@ -1077,7 +1149,6 @@
             {e:"🕹️",n:"Broken Joystick",b:"ewaste",d:"Electronic sensors and wiring."}, 
             {e:"🎛️",n:"Audio Mixer",b:"ewaste",d:"Heavy electronic equipment."}, 
             {e:"📡",n:"Old Router",b:"ewaste",d:"Circuitry and antennas."},
-            // EXPANDED E-WASTE
             {e:"🔋",n:"AA Battery",b:"ewaste",d:"Battery."},
             {e:"🔋",n:"AAA Battery",b:"ewaste",d:"Battery."},
             {e:"🔋",n:"D Battery",b:"ewaste",d:"Battery."},
@@ -1445,17 +1516,23 @@
                 this.used.add(rnd); this.currentItem = DATABASE[rnd];
 
                 const arena = document.getElementById('item-arena'); arena.innerHTML = '';
-                this.domEl = document.createElement('div'); this.domEl.className = 'waste-obj liquid-glass';
+                
+                this.domEl = document.createElement('div'); 
+                this.domEl.className = 'waste-container';
                 
                 this.domEl.innerHTML = `
-                    <svg class="timer-svg" viewBox="0 0 100 100">
-                        <circle class="timer-bg" cx="50" cy="50" r="45"></circle>
-                        <circle class="timer-path" cx="50" cy="50" r="45" id="t-path"></circle>
-                    </svg>
-                    <div class="obj-emoji">${this.currentItem.e}</div>
+                    <div class="waste-obj liquid-glass">
+                        <svg class="timer-svg" viewBox="0 0 100 100">
+                            <circle class="timer-bg" cx="50" cy="50" r="45"></circle>
+                            <circle class="timer-path" cx="50" cy="50" r="45" id="t-path"></circle>
+                        </svg>
+                        <div class="obj-emoji">${this.currentItem.e}</div>
+                    </div>
                     <div class="obj-name">${this.currentItem.n}</div>
                 `;
-                this.domEl.style.transform = 'scale(0)'; arena.appendChild(this.domEl);
+                
+                this.domEl.style.transform = 'scale(0)'; 
+                arena.appendChild(this.domEl);
 
                 // Speed calculation based on combo multiplier
                 let dynTime = Math.max(this.minTime, this.baseTime - (this.combo * 180));
